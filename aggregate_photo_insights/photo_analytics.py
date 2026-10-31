@@ -1,5 +1,10 @@
+# -*- coding: utf-8 -*-
+"""photo_grader - 모듈 3: pandas 기반 통계 및 시계열 분석.
+
+파일명: photo_analytics.py
+담당자: 하정윤 (아트서강)
+"""
 from typing import Any
-import numpy as np
 import pandas as pd
 
 
@@ -49,8 +54,8 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
     if missing_columns:
         raise ValueError(f"데이터프레임 필수 열 누락: {', '.join(missing_columns)}")
 
-    # 3. 원본 불변성 보장 (SettingWithCopyWarning 방지)
-    df = df_analyses.copy()
+    # 3. 원본 불변성 보장 및 메모리 최적화 (필요 4개 열만 복사)
+    df = df_analyses[required_columns].copy()
 
     # 4. 결측치 및 점수 이상치 정제
     df["final_score"] = pd.to_numeric(df["final_score"], errors="coerce")
@@ -63,15 +68,15 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
     df["final_score"] = df["final_score"].clip(lower=0.0, upper=10.0)
     total_photos = int(len(df))
 
-    # 5. 월별 시계열 집계 (captured_at)
+    # 5. 월별 시계열 집계 (captured_at 파싱 및 명시적 컬럼 분리)
     captured_dt = pd.to_datetime(df["captured_at"], errors="coerce")
     valid_time_mask = captured_dt.notna()
 
     monthly_trend: dict[str, dict[str, Any]] = {}
     if valid_time_mask.any():
-        time_df = df.loc[valid_time_mask]
-        periods = captured_dt.loc[valid_time_mask].dt.strftime("%Y-%m")
-        grouped_time = time_df.groupby(periods)["final_score"].agg(["count", "mean"]).sort_index()
+        df_time = df.loc[valid_time_mask].copy()
+        df_time["year_month"] = captured_dt.loc[valid_time_mask].dt.strftime("%Y-%m")
+        grouped_time = df_time.groupby("year_month")["final_score"].agg(["count", "mean"]).sort_index()
 
         monthly_trend = {
             str(period): {
@@ -81,13 +86,12 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
             for period, row in grouped_time.iterrows()
         }
 
-    # 6. 태그 심층 집계 (explode & 신뢰성 필터링)
+    # 6. 태그 심층 집계 (explode & 공백 정규화 & 신뢰성 필터링)
     df_tags = df[["final_score", "tags"]].explode("tags").dropna(subset=["tags"])
 
-    # 공백이나 유효하지 않은 타입 태그 정제
-    df_tags = df_tags[
-        df_tags["tags"].apply(lambda t: isinstance(t, str) and bool(t.strip()))
-    ]
+    # 태그 문자열 정규화: 앞뒤 공백 제거(strip) 및 유효 문자열 필터링
+    df_tags["tags"] = df_tags["tags"].astype(str).str.strip()
+    df_tags = df_tags[df_tags["tags"] != ""]
 
     top_tags: list[dict[str, Any]] = []
     bottom_tags: list[dict[str, Any]] = []
