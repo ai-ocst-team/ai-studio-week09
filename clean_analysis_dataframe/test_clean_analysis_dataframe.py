@@ -116,6 +116,17 @@ def test_empty_but_incomplete_schema_is_not_silently_fixed():
         clean_analysis_dataframe(pd.DataFrame(columns=["id"]))
 
 
+def test_row_index_without_columns_raises_missing_columns_error():
+    """행 인덱스가 있는 무열 입력은 완전히 빈 입력의 예외에 해당하지 않습니다."""
+    raw = pd.DataFrame(index=[101, 102])
+    with pytest.raises(ValueError, match="필수 열 누락") as error:
+        clean_analysis_dataframe(raw)
+    for column in ["id", "final_score", "captured_at", "tags"]:
+        assert column in str(error.value)
+    assert raw.shape == (2, 0)
+    assert raw.index.tolist() == [101, 102]
+
+
 def test_duplicate_column_names_are_rejected():
     raw = pd.concat([sample_frame([8]), pd.Series([6], name="final_score")], axis=1)
     with pytest.raises(ValueError, match="중복"):

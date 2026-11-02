@@ -73,7 +73,8 @@ def clean_analysis_dataframe(df_raw: pd.DataFrame) -> pd.DataFrame:
         raise ValueError("중복 열 이름은 허용되지 않습니다.")
 
     required_columns = ["id", "final_score", "captured_at", "tags"]
-    if df_raw.empty and len(df_raw.columns) == 0:
+    # empty는 한 축만 비어도 참이므로, 행과 열이 모두 없는 경우만 허용합니다.
+    if df_raw.shape == (0, 0):
         return pd.DataFrame(
             {
                 "id": pd.Series(dtype="object"),
