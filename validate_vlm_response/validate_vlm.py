@@ -67,7 +67,8 @@ def validate_vlm_response(raw_text: str) -> PhotoAnalysis:
 		if any(not isinstance(tag, str) or tag not in _TAG_VOCABULARY[category] for tag in tags):
 			raise ValueError(f"{category}에 허용되지 않은 태그가 있습니다.")
 
-	if data["focus_status"] not in _FOCUS_STATUSES:
+	focus_status = data["focus_status"]
+	if not isinstance(focus_status, str) or focus_status not in _FOCUS_STATUSES:
 		raise ValueError("focus_status가 허용된 값이 아닙니다.")
 
 	return data
