@@ -1,0 +1,32 @@
+--- preserved_original/clean_analysis_dataframe.py
++++ current/clean_analysis_dataframe.py
+@@ -73,7 +73,8 @@
+         raise ValueError("중복 열 이름은 허용되지 않습니다.")
+ 
+     required_columns = ["id", "final_score", "captured_at", "tags"]
+-    if df_raw.empty and len(df_raw.columns) == 0:
++    # empty는 한 축만 비어도 참이므로, 행과 열이 모두 없는 경우만 허용합니다.
++    if df_raw.shape == (0, 0):
+         return pd.DataFrame(
+             {
+                 "id": pd.Series(dtype="object"),
+--- preserved_original/test_clean_analysis_dataframe.py
++++ current/test_clean_analysis_dataframe.py
+@@ -116,6 +116,17 @@
+         clean_analysis_dataframe(pd.DataFrame(columns=["id"]))
+ 
+ 
++def test_row_index_without_columns_raises_missing_columns_error():
++    """행 인덱스가 있는 무열 입력은 완전히 빈 입력의 예외에 해당하지 않습니다."""
++    raw = pd.DataFrame(index=[101, 102])
++    with pytest.raises(ValueError, match="필수 열 누락") as error:
++        clean_analysis_dataframe(raw)
++    for column in ["id", "final_score", "captured_at", "tags"]:
++        assert column in str(error.value)
++    assert raw.shape == (2, 0)
++    assert raw.index.tolist() == [101, 102]
++
++
+ def test_duplicate_column_names_are_rejected():
+     raw = pd.concat([sample_frame([8]), pd.Series([6], name="final_score")], axis=1)
+     with pytest.raises(ValueError, match="중복"):

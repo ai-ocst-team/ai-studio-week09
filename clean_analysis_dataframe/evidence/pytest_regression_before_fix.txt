@@ -1,0 +1,21 @@
+빈 입력 판정 오류 재현
+실행 도구: Chat gpt / Python 3.12.14 / pandas 3.0.1 / pytest 9.1.1
+기록 시각(UTC): 2026-11-02T07:20:26.817690+00:00
+명령: python -B -X utf8 -m pytest -v --tb=short -p no:cacheprovider test_clean_analysis_dataframe.py::test_row_index_without_columns_raises_missing_columns_error
+종료 코드: 1
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\test-env\Scripts\python.exe
+rootdir: C:\Users\psang\Documents\Codex\2026-09-22\dlr\output\week9\copilot_clean_analysis_dataframe
+collecting ... collected 1 item
+
+test_clean_analysis_dataframe.py::test_row_index_without_columns_raises_missing_columns_error FAILED [100%]
+
+================================== FAILURES ===================================
+_________ test_row_index_without_columns_raises_missing_columns_error _________
+test_clean_analysis_dataframe.py:122: in test_row_index_without_columns_raises_missing_columns_error
+    with pytest.raises(ValueError, match="필수 열 누락") as error:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+=========================== short test summary info ===========================
+FAILED test_clean_analysis_dataframe.py::test_row_index_without_columns_raises_missing_columns_error
+============================== 1 failed in 1.00s ==============================

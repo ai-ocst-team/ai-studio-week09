@@ -1,0 +1,70 @@
+{
+  "recorded_at_utc": "2026-11-02T07:25:23.434036+00:00",
+  "scope": "Current individual module files; not a full team repository/history audit.",
+  "snapshot_hashes_verified": true,
+  "copilot_export_hash_verified": true,
+  "working_files_equal_preserved_original": {
+    "clean_analysis_dataframe.py": false,
+    "test_clean_analysis_dataframe.py": false,
+    "copilot_prompt.txt": true
+  },
+  "intentional_changes": [
+    "empty-input guard corrected",
+    "one regression test added",
+    "evidence test collection ignore added",
+    "report and checklists updated"
+  ],
+  "historical_record": "copilot_chat_verification.json describes its earlier pre-fix verification time.",
+  "regression_before_fix": "1 failed in 1.00s",
+  "latest_pytest_result": "33 passed in 0.77s",
+  "current_file_sha256": {
+    "clean_analysis_dataframe.py": "8773445fcb2580f07ab6a73b1968aa08e08568b8ab7d44d026e5464caab13496",
+    "test_clean_analysis_dataframe.py": "22ed609618a56d5321023735d4eb876c66f0a5c1a3c23ad33c2e892f7ba819f8",
+    "evidence/conftest.py": "ba809dd7548f464f59b1c24dd48ac2521e88e4a91cfbe7fe57989ed3c1873f7a",
+    "evidence/pytest_regression_before_fix.txt": "d7bd40211541d9b44e9e0e46a283ad2882757dd391d5c54d2afbf8561349d733",
+    "evidence/pytest_after_fix.txt": "d1f32bda70aba82fc5c5f2a7897ee29525460a7aec3ec9df80089a64ec761823",
+    "report.md": "061fa98327fb66ca72e33986df2e9fbdb63def78b691c9ddfeedc39cb7b1cbed"
+  },
+  "text_files_scanned": [
+    "CHECKLIST.md",
+    "clean_analysis_dataframe.py",
+    "copilot_prompt.txt",
+    "evidence/code_review.txt",
+    "evidence/conftest.py",
+    "evidence/copilot_chat_original.json",
+    "evidence/copilot_chat_verification.json",
+    "evidence/copilot_original_2026-11-02/clean_analysis_dataframe.py",
+    "evidence/copilot_original_2026-11-02/copilot_prompt.txt",
+    "evidence/copilot_original_2026-11-02/manifest.json",
+    "evidence/copilot_original_2026-11-02/test_clean_analysis_dataframe.py",
+    "evidence/pytest_after_fix.txt",
+    "evidence/pytest_copilot_result.txt",
+    "evidence/pytest_regression_before_fix.txt",
+    "evidence/review_fix.diff",
+    "prompt_log.md",
+    "README.md",
+    "report.md",
+    "requirements.txt",
+    "SECURITY_CHECKLIST.md",
+    "START_HERE.txt",
+    "test_clean_analysis_dataframe.py"
+  ],
+  "patterns_used": [
+    "private_key_header",
+    "github_token",
+    "google_api_key",
+    "openai_style_key",
+    "aws_access_key",
+    "credential_assignment"
+  ],
+  "credential_pattern_findings": [],
+  "env_ignore_patterns_present": true,
+  "environment_files_in_scope": [],
+  "git_commit_or_push_performed": false,
+  "team_repository_files_modified": false,
+  "limitations": [
+    "Pattern scan does not guarantee absence of every secret.",
+    "Author name and local paths are retained.",
+    "No team integration/performance test or all-member security sign-off."
+  ]
+}
