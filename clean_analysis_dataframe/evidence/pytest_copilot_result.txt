@@ -1,0 +1,43 @@
+Copilot 생성본에 대한 Chat gpt 실행 검증
+Python 3.12.14 / pandas 3.0.1 / pytest 9.1.1
+명령: python -m pytest -v --tb=short -p no:cacheprovider test_clean_analysis_dataframe.py
+
+============================= test session starts =============================
+platform win32 -- Python 3.12.14, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\test-env\Scripts\python.exe
+rootdir: C:\Users\psang\Documents\Codex\2026-09-22\dlr\output\week9\copilot_clean_analysis_dataframe
+collecting ... collected 32 items
+
+test_clean_analysis_dataframe.py::test_normal_values_and_dates PASSED    [  3%]
+test_clean_analysis_dataframe.py::test_numeric_strings_and_score_clipping PASSED [  6%]
+test_clean_analysis_dataframe.py::test_missing_or_unusable_scores_are_removed_not_filled_with_zero PASSED [  9%]
+test_clean_analysis_dataframe.py::test_invalid_or_missing_dates_keep_scored_rows PASSED [ 12%]
+test_clean_analysis_dataframe.py::test_original_input_extra_columns_tags_and_index_are_preserved PASSED [ 15%]
+test_clean_analysis_dataframe.py::test_inclusive_score_boundaries[scores0] PASSED [ 18%]
+test_clean_analysis_dataframe.py::test_inclusive_score_boundaries[scores1] PASSED [ 21%]
+test_clean_analysis_dataframe.py::test_inclusive_score_boundaries[scores2] PASSED [ 25%]
+test_clean_analysis_dataframe.py::test_completely_empty_dataframe_gets_empty_standard_columns PASSED [ 28%]
+test_clean_analysis_dataframe.py::test_empty_dataframe_with_schema_keeps_extra_columns PASSED [ 31%]
+test_clean_analysis_dataframe.py::test_all_scores_missing_returns_typed_empty_frame PASSED [ 34%]
+test_clean_analysis_dataframe.py::test_non_dataframe_input_raises_type_error[None] PASSED [ 37%]
+test_clean_analysis_dataframe.py::test_non_dataframe_input_raises_type_error[raw1] PASSED [ 40%]
+test_clean_analysis_dataframe.py::test_non_dataframe_input_raises_type_error[raw2] PASSED [ 43%]
+test_clean_analysis_dataframe.py::test_non_dataframe_input_raises_type_error[dataframe] PASSED [ 46%]
+test_clean_analysis_dataframe.py::test_non_dataframe_input_raises_type_error[123] PASSED [ 50%]
+test_clean_analysis_dataframe.py::test_missing_required_column_raises_value_error[id] PASSED [ 53%]
+test_clean_analysis_dataframe.py::test_missing_required_column_raises_value_error[final_score] PASSED [ 56%]
+test_clean_analysis_dataframe.py::test_missing_required_column_raises_value_error[captured_at] PASSED [ 59%]
+test_clean_analysis_dataframe.py::test_missing_required_column_raises_value_error[tags] PASSED [ 62%]
+test_clean_analysis_dataframe.py::test_empty_but_incomplete_schema_is_not_silently_fixed PASSED [ 65%]
+test_clean_analysis_dataframe.py::test_duplicate_column_names_are_rejected PASSED [ 68%]
+test_clean_analysis_dataframe.py::test_boolean_infinite_and_complex_scores_are_not_valid_scores PASSED [ 71%]
+test_clean_analysis_dataframe.py::test_date_objects_and_timezone_keep_local_capture_month PASSED [ 75%]
+test_clean_analysis_dataframe.py::test_numbers_are_not_inferred_as_unix_nanosecond_dates PASSED [ 78%]
+test_clean_analysis_dataframe.py::test_repeated_cleaning_produces_same_result PASSED [ 81%]
+test_clean_analysis_dataframe.py::test_duplicate_row_indices_are_preserved PASSED [ 84%]
+test_clean_analysis_dataframe.py::test_ambiguous_relative_or_out_of_range_dates_become_nat[now] PASSED [ 87%]
+test_clean_analysis_dataframe.py::test_ambiguous_relative_or_out_of_range_dates_become_nat[today] PASSED [ 90%]
+test_clean_analysis_dataframe.py::test_ambiguous_relative_or_out_of_range_dates_become_nat[01/02/2026] PASSED [ 93%]
+test_clean_analysis_dataframe.py::test_ambiguous_relative_or_out_of_range_dates_become_nat[3000-01-01] PASSED [ 96%]
+test_clean_analysis_dataframe.py::test_ambiguous_relative_or_out_of_range_dates_become_nat[] PASSED [100%]
+
+============================= 32 passed in 0.87s ==============================
