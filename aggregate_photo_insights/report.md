@@ -10,13 +10,13 @@
 ## 1단계 : 논리설계
 
 ### 1.1 함수 개요 및 시스템 맥락
-`aggregate_photo_insights` 함수는 VLM(멀티모달 LLM)의 사진 분석 결과와 EXIF 메타데이터가 적재된 pandas DataFrame을 입력받아, 결측치와 이상치를 정제하고 **3개월 시계열 누적 월별 성장 추이** 및 **8대 미학 범주 태그별 강약점 인사이트(Top 5 A컷 제조기 vs Bottom 5 감점 요인)**를 집계하는 핵심 분석 함수이다.
+`aggregate_photo_insights` 함수는 VLM의 사진 분석 결과와 각 사진의 EXIF 데이터를 포함한 pandas DataFrame을 입력받아, 결측치와 이상치를 정제하고 **3개월 시계열 누적 월별 성장 추이** 및 **6대 미학 범주 태그의 약점 및 강점 TOP5 정보**를 집계하는 핵심 분석 함수이다.
 
 - **함수 시그니처**: `def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:`
 - **모듈 위치**: `photo_grader/photo_analytics.py` (모듈 3: pandas 기반 통계 및 시계열 분석)
 - **책임**: 
   1. 필수 컬럼 유효성 검증 및 빈 데이터 방어
-  2. 점수 결측치 제거 및 0.0~10.0 범위 클리핑
+  2. 점수 결측치 제거 및 0.0~10.0 범위 제한 및 클리핑
   3. 날짜 파싱 및 `YYYY-MM` 기준 월별 사진 건수 및 평균 점수 집계 (`monthly_trend`)
   4. 태그 분해(`explode`), 정규화 및 최소 2회 이상 등장한 태그 대상 Top 5 / Bottom 5 산출
 
@@ -25,7 +25,7 @@
   - `id`: 사진 식별자 (`int` 또는 `str`)
   - `final_score`: VLM 종합 평가 점수 (`float`, 0.0 ~ 10.0)
   - `captured_at`: 촬영 일시 (`str` 또는 `datetime`, 예: `"2026-08-15 14:30:00"`)
-  - `tags`: 8대 미학 범주 통제 어휘 태그 리스트 (`list[str]`, 예: `["3분할_구도", "자연광"]`)
+  - `tags`: 6대 미학 범주 통제 어휘 태그 리스트 (`list[str]`, 예: `["3분할_구도", "자연광"]`)
 - **출력 계약 (`dict[str, Any]`)**:
   ```python
   {
@@ -36,12 +36,12 @@
           "2026-10": {"count": 25, "avg_score": 8.78}
       },
       "top_tags": [         # 최소 2회 이상 등장 태그 중 평균 점수 상위 최대 5개
-          {"tag": "3분할_구도", "avg_score": 9.20, "count": 12},
-          {"tag": "자연광", "avg_score": 8.95, "count": 18}
+          {"tag": "자연풍경", "avg_score": 9.20, "count": 12},
+          {"tag": "건축도시", "avg_score": 8.95, "count": 18}
       ],
       "bottom_tags": [      # 최소 2회 이상 등장 태그 중 평균 점수 하위 최대 5개
-          {"tag": "빛_부족", "avg_score": 4.10, "count": 5},
-          {"tag": "수평_기울어짐", "avg_score": 4.50, "count": 4}
+          {"tag": "인물동물", "avg_score": 4.10, "count": 5},
+          {"tag": "사물정물", "avg_score": 4.50, "count": 4}
       ]
   }
   ```
@@ -52,8 +52,8 @@ AI에게 코드를 요청하기 전, 7주차 설계 문서(파트 4 테스트 �
 | ID | 범주 | 입력 조건 | 기대 결과 및 판정 기준 |
 |:---:|:---:|:---|:---|
 | **T09** | **정상** | 사진 100건 정상 데이터프레임 | `total_photos == 100`, `top_tags` 및 `bottom_tags` 각 최대 5개 반환, 평균 점수 순 정렬 일치 |
-| **T10** | **정상** | 2026년 8월~10월 3개월간 날짜가 분포된 데이터프레임 | `monthly_trend`에 `"2026-08"`, `"2026-09"`, `"2026-10"` 키와 각 월별 건수 및 평균 점수 정상 산출 |
-| **T11** | **경계** | 빈 데이터프레임 (`pd.DataFrame()`) 또는 단 1장 입력 | 빈 DF 시 `total_photos=0`, 빈 딕셔너리/리스트 반환. 1장 입력 시 `count >= 2` 미충족으로 `top/bottom_tags`는 빈 리스트 반환 |
+| **T10** | **정상** | 2026년 8월~10월 3개월간 날짜가 분포된 데이터프레임 | `monthly_trend`에 `"2026-08"`, `"2026-09"`, `"2026-10"` 키와 각 월별 점수 및 평균 점수 정상 산출 |
+| **T11** | **경계** | 빈 데이터프레임 (`pd.DataFrame()`) 또는 단 1장 입력 | 빈 데이터프레임의 경우 `total_photos=0`, 빈 딕셔너리/리스트 반환. 1장 입력 시 `count >= 2` 미충족으로 `top/bottom_tags`는 빈 리스트 반환 |
 | **T12** | **예외** | 필수 컬럼(`final_score` 또는 `tags`)이 누락된 데이터프레임 | `ValueError("데이터프레임 필수 열 누락: ...")` 예외 명시적 발생 |
 
 ---
@@ -64,7 +64,7 @@ AI에게 코드를 요청하기 전, 7주차 설계 문서(파트 4 테스트 �
 
 ```markdown
 당신은 파이썬 백엔드 및 데이터 분석 모듈 개발을 돕는 전문 어시스턴트입니다.
-'VLM 기반 사진 감성·구도 심층 비평 및 스마트 Culling 시스템(아트서강)'의 데이터 분석 모듈(photo_analytics.py)에 들어갈 집계 함수를 구현해 주세요.
+'VLM 기반 사진 감성·구도 심층 비평 및 스마트 분류 시스템'의 데이터 분석 모듈(photo_analytics.py)에 들어갈 집계 함수를 구현해 주세요.
 
 [함수 시그니처 — 변경 금지]
 def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
@@ -72,7 +72,7 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
 [입력 명세]
 df_analyses: 사진 분석 레코드가 담긴 pandas DataFrame.
 - 필수 포함 컬럼: ["id", "final_score", "captured_at", "tags"]
-- tags 컬럼의 각 행은 문자열 리스트(예: ["3분할_구도", "자연광"]) 형태임.
+- tags 컬럼의 각 행은 문자열 리스트(예: ["인물동물", "완전정지"]) 형태임.
 
 [출력 명세 — 딕셔너리 계약]
 다음 키를 가진 단일 딕셔너리를 반환할 것:
@@ -99,11 +99,10 @@ df_analyses: 사진 분석 레코드가 담긴 pandas DataFrame.
 3. 결측치 및 이상치 정제:
    - final_score가 결측(NaN)이거나 숫자가 아닌 행은 집계에서 제외할 것.
    - final_score는 0.0 ~ 10.0 범위를 벗어나지 않도록 클리핑(clip)할 것.
-   - captured_at은 datetime으로 변환하되, 잘못된 형식은 NaT 처리 후 시계열 집계에서 안전하게 제외할 것.
+   - captured_at은 datetime으로 변환하되, 잘못된 형식은 NaN 처리 후 시계열 집계에서 안전하게 제외할 것.
 
 [제약 조건 — 반드시 준수]
 - 표준 라이브러리와 pandas만 주로 사용할 것.
-- 원본 DataFrame을 직접 수정하지 말고(inplace 변경 금지), .copy()를 통해 복사본에서 작업할 것 (SettingWithCopyWarning 방지).
 - 가변 기본값 인자 사용 금지.
 - 타입 힌트와 상세 docstring 필수 작성.
 
@@ -135,7 +134,7 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
     Args:
         df_analyses (pd.DataFrame): 사진 분석 레코드가 담긴 원본 데이터프레임.
             - 필수 열: ["id", "final_score", "captured_at", "tags"]
-            - tags 열은 문자열 리스트(예: ["3분할_구도", "자연광"]) 형태여야 합니다.
+            - tags 열은 문자열 리스트(예: ["인물동물","완전정지"]) 형태여야 합니다.
 
     Returns:
         dict[str, Any]: 다음 구조의 단일 딕셔너리:
@@ -268,7 +267,7 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
 
 ### 4.1 체크리스트 기반 심층 코드리딩 (발견된 결함 및 개선점 4건)
 
-Gemini WebUI가 작성한 코드는 구조가 매우 탄탄하고 1차 프롬프트 요구사항을 충실히 반영했으나, 실제 운영 환경과 대용량 데이터 관점에서 한 줄씩 정독(Code Reading)한 결과 **놓치기 쉬운 4가지 실무적 결함**이 확인됨.
+Gemini WebUI가 작성한 코드는 구조가 매우 탄탄하고 1차 프롬프트 요구사항을 충실히 반영했으나, 실제 운영 환경과 대용량 데이터 관점에서 한 줄씩 읽고 AI를 활용하여 분석한 결과 **놓치기 쉬운 4가지 실무적 결함**이 확인됨.
 
 1. **태그 문자열 미정규화(`strip` 누락)로 인한 통계 누락 버그 (치명적 결함)**:
    - **AI 코드**:
@@ -277,8 +276,8 @@ Gemini WebUI가 작성한 코드는 구조가 매우 탄탄하고 1차 프롬프
          df_tags["tags"].apply(lambda t: isinstance(t, str) and bool(t.strip()))
      ]
      ```
-   - **결함 내용**: `bool(t.strip())`으로 공백 전용 문자열(`"   "`)은 걸러내지만, **정작 문자열 자체의 앞뒤 공백을 제거하지 않고 원본 `t`를 그대로 유지함**.
-   - **실제 문제 시나리오**: 한 사진에 `" 자연광 "`, 다른 사진에 `"자연광"`이 등록되었을 때, 실제로는 동일한 '자연광' 태그가 2회 등장했음에도 불구하고 서로 다른 키로 분리되어 각각 1회로 카운트됨. 결과적으로 `reliable_tags (count >= 2)` 필터에서 **둘 다 탈락(`top_tags: []`)**해버리는 심각한 데이터 집계 왜곡이 발생함.
+   - **결함 내용**: `bool(t.strip())`으로 공백 전용 문자열(`"   "`) 자체는 걸러내지만, **정작 문자열 자체의 앞뒤 공백을 제거하지 못하고 원본 `t`를 그대로 유지함**.
+   - **실제 문제 시나리오**: 한 사진에 `" 자연광 "`, 다른 사진에 `"자연광"`이 등록되었을 때, 실제로는 동일한 '자연광' 태그가 2회 등장함에도 다른 키로 분리되어 각각 1회로 카운트됨. 결과적으로 `reliable_tags (count >= 2)` 필터에서 **둘 다 탈락(`top_tags: []`)**해버리는 데이터 집계 왜곡이 발생함.
    - **수정 방향**: `df_tags["tags"] = df_tags["tags"].astype(str).str.strip()`을 적용하여 공백을 완벽히 정규화함.
 
 2. **전체 컬럼 복사(`df_analyses.copy()`)로 인한 대용량 배치 메모리 오버헤드**:
@@ -289,7 +288,7 @@ Gemini WebUI가 작성한 코드는 구조가 매우 탄탄하고 1차 프롬프
 
 3. **미사용 임포트(`import numpy as np`) 잔재 (린터 경고)**:
    - **AI 코드**: 최상단에 `import numpy as np` 선언.
-   - **결함 내용**: 함수 본문 전체에서 `np`를 단 한 번도 호출하지 않음. Flake8/Ruff 린터 규칙(`F401: unused import`)에 적발되며 불필요한 의존성을 유발함.
+   - **결함 내용**: 함수 본문 전체에서 `np`를 단 한 번도 호출하지 않음. 
    - **수정 방향**: 미사용 import 정리.
 
 4. **`apply(lambda)` 행 단위 순회로 인한 연산 비효율**:
@@ -321,7 +320,7 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
     Args:
         df_analyses (pd.DataFrame): 사진 분석 레코드가 담긴 원본 데이터프레임.
             - 필수 열: ["id", "final_score", "captured_at", "tags"]
-            - tags 열은 문자열 리스트(예: ["3분할_구도", "자연광"]) 형태여야 합니다.
+            - tags 열은 문자열 리스트(예: ["인물동물","완전정지"]) 형태여야 합니다.
 
     Returns:
         dict[str, Any]: 다음 구조의 단일 딕셔너리:
@@ -606,11 +605,15 @@ test_photo_analytics.py::test_edge_score_clipping_and_immutability PASSED [100%]
 ```bash
 # 1. Gemini WebUI 1차 생성본 저장 (수정 전 원본 보존)
 git add photo_analytics.py
-git commit -m "feat: initial AI-generated draft of aggregate_photo_insights via Gemini WebUI"
+git commit -m "feat: AI생성 코드 커밋"
 
 # 2. 코드 리딩 기반 결함 수정(공백 정규화, 메모리 최적화), 단위 테스트 및 보고서 갱신 커밋
 git add photo_analytics.py test_photo_analytics.py report.md prompt_log.md
-git commit -m "fix(analytics): normalize tag whitespace, optimize DataFrame copy projection, and clean unused imports"
+git commit -m "feat:AI생성 코드 수정"
+git add report.md prompt_log.md
+git commit -m "docs: 체크리스트, usage_log문서, report문서 작성"
+git add test_photo_analytics.py
+git commit -m "feat: 테스트 함수 업로드"
 ```
 
 ### 6.2 과정 기록 (`prompt_log.md`) 최종 양식
@@ -618,7 +621,7 @@ git commit -m "fix(analytics): normalize tag whitespace, optimize DataFrame copy
 ## [모듈 3] aggregate_photo_insights — 2026-10-31, 작성자: 하정윤
 - 사용 도구: Google Gemini WebUI
 - 프롬프트: 2단계 정밀 프롬프트 전문 사용
-- 생성 코드 위치: 커밋 `b8c4d1e` (수정 전 원본)
+- 생성 코드 위치: 커밋 `e793d3a` (수정 전 원본)
 - 코드 리딩에서 발견한 결함:
   1) 태그 공백 미정규화(`strip` 누락): `" 자연광 "`과 `"자연광"`이 서로 다른 태그로 인식되어 신뢰성 필터(`count >= 2`)에서 둘 다 누락되는 데이터 정제 결함.
   2) 전체 컬럼 복사(`df_analyses.copy()`): 수백 장 배치 시 불필요한 고용량 비평문/바이너리 컬럼까지 복제되어 메모리 낭비 유발.
