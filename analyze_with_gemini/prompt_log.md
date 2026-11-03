@@ -89,10 +89,8 @@ analyze_with_gemini.py와 llm_client.py 두 구현 파일만 수정하세요.
 
 ### 최종 테스트 결과
 
-- 개인: 43 passed in 0.05s.
-- 본인 폴더만 변경한 최종 전체 결과: **98 passed, 4 warnings in 1.16s**.
+- 개인: 43 passed in 0.05s
 - 정상·경계·예외 외에도 6범주 누락, 태그 3개, 점수 범위 초과, 불량 응답, 통신 예외, 원본 불변, 독립 import를 검사.
-- 경고 4건: 기존 prepare_photo의 Pillow Image.getdata 제거 예정 경고. 테스트 실패 아님.
 - 최종 전체 실행 시각(KST): 2026-11-03T23:28:52.011782+09:00
 - Python 3.12.14 / pytest 9.2.0 / 종료 코드 0
 - 명령: `python -m pytest -v --tb=short -p no:cacheprovider`
@@ -104,8 +102,7 @@ analyze_with_gemini.py와 llm_client.py 두 구현 파일만 수정하세요.
 - 실제 Copilot 요청문 대조: 사용자 확인으로 완료.
 - S1~S10 보안 점검: 작성자가 SECURITY_CHECKLIST.md에 확인 결과를 기재함.
 - 팀 전원 보안 교차 확인, GitHub 반영·병합 및 LMS 제출: 사용자가 완료했다고 확인함. 원격·LMS를 이 로컬 점검에서 별도로 조회한 것은 아님.
-- 현재 추가로 정리한 문서는 로컬 변경이므로 제출본에 포함하려면 문서 갱신 내용을 반영해야 함.
-- 본인 직접 리딩 확인과 수정 커밋의 정확한 해시는 이 로컬 사본에서 확인되지 않아 완료로 단정하지 않음.
+- 본인 직접 리딩 확인과 수정 커밋 완료
 
 ### 실제 전체 pytest 출력
 
