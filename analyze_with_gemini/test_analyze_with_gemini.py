@@ -3,14 +3,12 @@ import copy
 import sys
 from pathlib import Path
 
-# 기존 팀 검증 모듈을 재사용한다.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "validate_vlm_response"))
 import json
 
 import pytest
 
-import llm_client
-from analyze_with_gemini import analyze_with_gemini
+from . import llm_client
+from .analyze_with_gemini import analyze_with_gemini
 
 CATEGORIES = (
     "피사체 장르", "빛의 조건", "피사체 동세", "카메라 앵글", "공간 구성", "색채 조화"
@@ -183,3 +181,27 @@ def test_mock_docstring_and_json_contract():
     result = json.loads(llm_client.generate_analysis(b"dummy", "dummy", "dummy"))
     assert set(result["aesthetic_tags"]) == set(CATEGORIES)
     assert all(0 <= result[field] <= 10 for field in SCORES)
+
+
+def test_repository_import_without_test_path_setup(tmp_path):
+    """새 Python 프로세스에서 저장소 루트만으로 불러오고 호출한다."""
+    import subprocess
+
+    root = Path(__file__).resolve().parent.parent
+    script = f"""
+import sys
+sys.path.insert(0, {str(root)!r})
+from analyze_with_gemini.analyze_with_gemini import analyze_with_gemini
+result = analyze_with_gemini(
+    {{'upload_bytes': b'dummy', 'sha256': 'a' * 64, 'safe_exif': {{}}}},
+    'dummy', '',
+)
+assert len(result['aesthetic_tags']) == 6
+print('ok')
+"""
+    completed = subprocess.run(
+        [sys.executable, "-I", "-B", "-c", script],
+        cwd=tmp_path, capture_output=True, text=True, check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert completed.stdout.strip() == "ok"

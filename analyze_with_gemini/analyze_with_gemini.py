@@ -2,10 +2,15 @@
 import json
 import math
 import re
+from pathlib import Path
+from runpy import run_path
 from typing import Any
 
-import llm_client
-from validate_vlm_response import validate_vlm_response
+from . import llm_client
+
+# 팀원 파일은 그대로 읽고, 같은 이름의 폴더/모듈이 충돌하지 않도록 격리한다.
+_VALIDATOR_PATH = Path(__file__).resolve().parent.parent / "validate_vlm_response" / "validate_vlm_response.py"
+validate_vlm_response = run_path(str(_VALIDATOR_PATH))["validate_vlm_response"]
 
 _SAFE_EXIF_KEYS = (
     "aperture",
