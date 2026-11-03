@@ -80,7 +80,7 @@
   - 코드만 출력하고, 짧은 설명은 코드 아래에 3줄 이내로 적을 것.
   ````
 - **생성 코드 위치**: 커밋 `348eee4` (GitHub Copilot 생성 원본, `prepare_photo/prepare_photo.py`, 3단계)
-- **코드 리딩에서 발견한 결함 및 실무 개선점**:
+- **코드 리딩에서 발견한 문제점**:
   1. **서브 IFD 미조회로 실제 카메라 EXIF 대부분 누락**: `image.getexif()`의 기본 영역만 조회하여, 서브 IFD(`0x8769`)에 저장되는 조리개·셔터스피드·ISO·초점거리·렌즈 모델·촬영 일시를 실제 카메라 사진에서 읽지 못하고 `camera_model`만 남을 가능성이 높음. Copilot 자체 시험은 가짜 EXIF를 기본 영역에 직접 넣어 통과했기 때문에 이 결함이 가려져 있었으며, 정량 메타데이터 결합이라는 설계 목적(설계문서 문제 정의서 ③)을 무너뜨리는 심각한 결함.
   2. **잘못된 EXIF 태그 번호**: 렌즈 모델에 `0xFDEA`를 사용했으나 Pillow `ExifTags`에 존재하지 않는 번호이고(`TAGS.get(0xFDEA)` → `None`), 표준 LensModel은 `0xA434`임. ISO 보조 후보 `0x8829`는 ISO가 아니라 `Interlace` 태그(`TAGS.get(0x8829)` → `Interlace`)여서 엉뚱한 값이 `iso`로 저장될 위험이 있음.
   3. **손상 파일·비파일 경로 예외 누락**: `Image.open` 단계에서 발생하는 `OSError`/`SyntaxError`는 `UnidentifiedImageError`가 아니므로 `ValueError("손상된 이미지 파일")`로 변환되지 않고 그대로 노출됨. 또한 `path.exists()`는 폴더도 통과시켜 `IsADirectoryError`·`PermissionError`가 명세 밖 예외로 발생함.
