@@ -1,0 +1,26 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\류시향\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\류시향\Desktop\ai-studio-week09\prepare_photo
+collecting ... collected 9 items
+
+test_prepare_photo.py::test_t01_jpeg_with_exif PASSED                    [ 11%]
+test_prepare_photo.py::test_t02_png_without_exif PASSED                  [ 22%]
+test_prepare_photo.py::test_t03_huge_image PASSED                        [ 33%]
+test_prepare_photo.py::test_t04_missing_file PASSED                      [ 44%]
+test_prepare_photo.py::test_t04_text_file PASSED                         [ 55%]
+test_prepare_photo.py::test_directory_path_is_not_file PASSED            [ 66%]
+test_prepare_photo.py::test_truncated_jpeg PASSED                        [ 77%]
+test_prepare_photo.py::test_no_upscale_small_image PASSED                [ 88%]
+test_prepare_photo.py::test_extract_safe_exif_without_exif PASSED        [100%]
+
+============================== warnings summary ===============================
+test_prepare_photo.py::test_t01_jpeg_with_exif
+test_prepare_photo.py::test_t02_png_without_exif
+test_prepare_photo.py::test_t03_huge_image
+test_prepare_photo.py::test_no_upscale_small_image
+  C:\Users\류시향\Desktop\ai-studio-week09\prepare_photo\prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 9 passed, 4 warnings in 3.17s ========================
