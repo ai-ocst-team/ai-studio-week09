@@ -8,12 +8,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
+from PIL import UnidentifiedImageError
 
 from prepare_photo.prepare_photo import prepare_photo
 from analyze_with_gemini.analyze_with_gemini import analyze_with_gemini
@@ -69,7 +70,14 @@ def run_pipeline(
     if not dir_path.is_dir():
         raise ValueError(f"지정된 경로는 디렉토리가 아닙니다: {image_dir}")
 
-    # 지원되는 이미지 파일 검색
+    # =========================================================================
+    # [수정 1: 환경변수/Mock 스위치 동기화]
+    # AI 초기 코드 결함: use_mock 인자가 선언되었으나 VLM 호출부에 전달되지 않았음
+    # 해결: 환경변수 USE_MOCK을 동기화하여 하위 LLM 클라이언트가 Mock/Real 모드를 정확히 감지하도록 개선.
+    # =========================================================================
+    os.environ["USE_MOCK"] = "true" if use_mock else "false"
+
+    # 지원되는 이미지 파일 검색 (대소문자 무관)
     image_files = sorted(
         [p for p in dir_path.iterdir() if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS]
     )
@@ -96,7 +104,11 @@ def run_pipeline(
                 hint=hint,
             )
 
-            # [어댑터 1] aesthetic_tags Dict를 1차원 List로 평탄화 (explode 대응)
+            # -----------------------------------------------------------------
+            # [수정 2]: 태그 중복 제거 및 데이터 무결성 보장]
+            # AI 초기 코드 결함: VLM 태그(Dict)를 평탄화 하는 과정에서 중복 체크가 누락됨
+            # 해결: 1차원 평탄화 후 dict.fromkeys()를 적용하여 입력순서를 유지하면서 중복제거함
+            # -----------------------------------------------------------------
             raw_tags_dict = analysis.get("aesthetic_tags", {})
             flat_tags: list[str] = [
                 tag
@@ -104,20 +116,25 @@ def run_pipeline(
                 if isinstance(tag_list, list)
                 for tag in tag_list
             ]
+            unique_tags = list(dict.fromkeys(flat_tags))  # [수정 3] 순서 보존 중복 제거
 
-            # [어댑터 2] clean_analysis_dataframe 및 내부 보관 규격으로 레코드 조립
+            # [어댑터] clean_analysis_dataframe 및 내부 보관 규격으로 레코드 조립
             # 내부 시스템에는 11주차 위치 검색을 위해 internal_gps(있을 경우)를 보존
             record = {
                 "id": photo_data["sha256"],
                 "final_score": analysis.get("final_score"),
                 "captured_at": photo_data.get("safe_exif", {}).get("captured_at"),
-                "tags": flat_tags,
+                "tags": unique_tags,
                 "gps": photo_data.get("internal_gps"),
             }
             records.append(record)
 
-        except Exception as exc:
-            # 개별 이미지 처리 오류 시 전체 파이프라인 중단 방지 (견고성)
+        except (UnidentifiedImageError, OSError, ValueError) as exc:
+            # =================================================================
+            # [수정 2: 예외 처리 범위 한정 및 무차별 넘기기 방지]
+            # AI 초기 코드 결함: except Exception으로 포괄 처리하여 어떠한 오류인지 디버깅 할 수 없는 치명적 문제
+            # 해결: 손상된 파일이나 파싱 불가 데이터만 선별적으로 스킵하고, 치명적 오류는 조기 감지.
+            # =================================================================
             failed_count += 1
             logger.warning(f"이미지 처리 건너뜀 ({img_path.name}): {exc}")
             continue
