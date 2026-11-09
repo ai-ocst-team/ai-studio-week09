@@ -1,0 +1,30 @@
+$ git rev-parse HEAD main origin/main
+b2a7d8ba5bbaef68c4951717912359e634b32274
+b2a7d8ba5bbaef68c4951717912359e634b32274
+b2a7d8ba5bbaef68c4951717912359e634b32274
+
+exit=0
+
+$ git rev-parse --is-shallow-repository
+false
+
+exit=0
+
+$ git log --all --full-history --format=%h %s -- **/.env* .env*
+(no stdout)
+
+exit=0
+
+$ git log --all --full-history --format=%h %s -- **.env*
+(no stdout)
+
+exit=0
+
+$ git check-ignore .env nested/.env .env.production
+.env
+nested/.env
+
+exit=0
+
+$ git ls-files --cached (filter basename starts with .env)
+(no matching paths)

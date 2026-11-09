@@ -1,0 +1,3 @@
+Baseline: b2a7d8ba5bbaef68c4951717912359e634b32274
+Seed 42: 200 complete return dictionaries equal; input frames unchanged.
+None, empty input and missing-column exception behavior equal.

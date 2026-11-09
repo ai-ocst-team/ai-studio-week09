@@ -1,0 +1,7 @@
+$ rg -n print\(|logging|requests|http|api_key|API_KEY|password|secret|token|subprocess|eval\(|exec\( --glob *.py prepare_photo analyze_with_gemini validate_vlm_response clean_analysis_dataframe aggregate_photo_insights
+analyze_with_gemini/test_analyze_with_gemini.py:188:    import subprocess
+analyze_with_gemini/test_analyze_with_gemini.py:200:print('ok')
+analyze_with_gemini/test_analyze_with_gemini.py:202:    completed = subprocess.run(
+
+exit=0
+Static keyword search only; not a full secret scan.

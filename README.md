@@ -1,0 +1,45 @@
+# 사진 평가 AI · 10주차 Task 5
+
+담당: 김도혁. 검토 기준: `main`의 `b2a7d8b`, 2026-11-09. 작업 브랜치는 `refactor/code-quality-and-audit`다. Task 1~4의 통합 구현은 이 작업에 포함하지 않았다.
+
+## 리팩터링과 검증
+
+`aggregate_photo_insights/photo_analytics.py`의 상·하위 태그 결과 변환을 `_tag_records()`로 추출했다. 중복된 문자열·숫자 변환과 반올림 규칙을 한 곳에서 관리한다. 정렬, 동점 처리, 5개 제한, 예외와 반환 계약을 유지했다. 성능 향상을 측정하거나 주장하지 않는다.
+
+AI 생성 근거는 `aggregate_photo_insights/prompt_log.md`와 생성 커밋 `e793d3a`, 이후 수정 커밋 `5f7b32a`다. 과거 문서에 적힌 수정 해시 `e2f5a7c`와 실제 파일 이력은 달라 이번 기록에는 확인한 해시를 사용한다.
+
+- 기준 커밋을 임시 디렉터리에 풀어 기존 테스트 실행: 98 passed, 4 warnings.
+- 변경 후 `.venv/bin/python -m pytest -q`: 98 passed, 4 warnings.
+- `.venv/bin/python scripts/verify_task5.py`: 합성 입력 200건의 전체 반환값과 원본 불변성 확인. None·빈 입력·필수 열 누락 예외도 비교.
+- 경고는 기존 `Image.getdata()` 사용에 대한 Pillow 폐기 예고다. 이 리팩터링에서 수정하지 않았다.
+- 증거: [수정 전](evidence/task5/pytest_before.txt), [수정 후](evidence/task5/pytest_after.txt), [동작 비교](evidence/task5/parity.txt).
+- 리팩터링 커밋: [`0b3a326`](https://github.com/ai-ocst-team/ai-studio-week09/commit/0b3a326), `refactor: extract shared tag result conversion`.
+
+## 코드 리뷰 및 팀 작업 접점
+
+아래 내용은 AI 사전 검토다. 실제 교차 리뷰 코멘트로 계산하지 않는다.
+
+| 위치·재현 조건 | 관찰과 영향 | 판단·제안 |
+|---|---|---|
+| 집계 함수의 top/bottom 결과 생성 | 동일한 변환이 두 곳에 있어 수정 시 불일치 가능 | 작은 함수로 추출. 정렬 로직은 각 위치에 유지 |
+| 분석 모듈과 응답 검증기의 `_TAG_VOCABULARY`, `_FOCUS_STATUSES` | 현재 허용값은 같지만 별도로 정의됨 | Task 2와 공통 규칙 소유권 협의 필요. 이번에는 변경 안 함 |
+| 분석 반환 `aesthetic_tags`와 정제·집계 입력 `tags` | 범주별 dict와 문자열 리스트 계약이 다름. 현재 루트 파이프라인 없음 | Task 1·2에서 매핑과 평탄화 규칙을 정하고 Task 4에서 검증 필요 |
+| `analyze_with_gemini/llm_client.py` 정상 호출 | 고정 Mock JSON 반환. docstring에만 `[MOCK]`, 실행 로그와 `USE_MOCK` 스위치 없음 | Task 3 구현 대상. 이번 리팩터링과 분리 |
+| `prepare_photo/prepare_photo.py` 입력 경로 | 로컬 파일을 직접 읽음. 웹 업로드 서비스용 경로 제한은 없음 | 향후 서비스 경계에서 허용 경로·용량 정책 필요. 현재 로컬 함수의 계약 변경 보류 |
+
+좋은 점은 집계 입력의 필요한 열만 복사하는 방식, 점수 정제, VLM 입력의 EXIF 화이트리스트와 응답 검증이다. 고정 경로의 `run_path()`는 로컬 검증 모듈을 실행하며 사용자 문자열을 실행하는 구조는 아니다. 사용자 hint를 데이터로 구분하는 프롬프트가 있지만 실제 모델의 프롬프트 주입 저항성을 검증한 것은 아니다.
+
+## 실제 교차 리뷰 반영 · 대기
+
+실제로 받은 코멘트가 제공되지 않았다. 아래 두 행은 요구사항 추적용 빈 자리이며 완료 건수가 아니다.
+
+| 항목 | 받은 코멘트·출처 | 수용/보류 판단 | 이유·추적 | 관련 커밋 |
+|---|---|---|---|---|
+| 1 | 대기 | 미판단 | 실제 원문 또는 정확한 요지와 리뷰어·PR 필요 | 없음 |
+| 2 | 대기 | 미판단 | 실제 원문 또는 정확한 요지와 리뷰어·PR 필요 | 없음 |
+
+## 보안·AI 기록 상태
+
+[보안 점검](SECURITY_CHECKLIST.md)과 [김도혁 AI 협업 기록](ai_log/10주차_김도혁.md)을 참조한다. `.env` 경로는 현재 추적 목록과 로컬 ref 이력에서 발견되지 않았다. 모든 과거 비밀값 노출이 없었다는 판정은 아니다.
+
+AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 아직 확인되지 않았다. 따라서 사람의 AI 통제 기록 요건 전체를 완료로 표시하지 않는다. 5주차 원본 체크리스트, 실제 교차 리뷰 2건, 사람의 판단 확인이 남았다. PR 생성·push·merge·최종 제출은 수행하지 않았다.
