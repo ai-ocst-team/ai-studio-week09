@@ -36,6 +36,15 @@ def check_result_contract(result):
     for item in result["top_tags"] + result["bottom_tags"]:
         assert {"tag", "avg_score", "count"} <= item.keys()
 
+def check_empty_contract(result, failed_count):
+    # 빈 데이터의 반환 계약을 공통으로 검증한다.
+    check_result_contract(result)
+    assert result["total_photos"] == 0
+    assert result["processed_count"] == 0
+    assert result["failed_count"] == failed_count
+    assert result["monthly_trend"] == {}
+    assert result["top_tags"] == []
+    assert result["bottom_tags"] == []
 
 def test_happy_path(tmp_path):
     # 정상 이미지 두 장이 전체 파이프라인을 통과하는지 확인한다.
@@ -56,13 +65,7 @@ def test_empty_folder(tmp_path):
     # 빈 폴더를 입력해도 오류 없이 빈 집계 결과를 반환하는지 확인한다.
     result = run_pipeline(tmp_path, use_mock=True)
 
-    check_result_contract(result)
-    assert result["total_photos"] == 0
-    assert result["processed_count"] == 0
-    assert result["failed_count"] == 0
-    assert result["monthly_trend"] == {}
-    assert result["top_tags"] == []
-    assert result["bottom_tags"] == []
+    check_empty_contract(result, failed_count=0)
 
 
 def test_corrupted_image(tmp_path):
@@ -71,10 +74,7 @@ def test_corrupted_image(tmp_path):
 
     result = run_pipeline(tmp_path, use_mock=True)
 
-    check_result_contract(result)
-    assert result["total_photos"] == 0
-    assert result["processed_count"] == 0
-    assert result["failed_count"] == 1
+    check_empty_contract(result, failed_count=1)
 
 
 def test_missing_exif(tmp_path):
