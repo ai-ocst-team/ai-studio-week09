@@ -1,0 +1,33 @@
+before, injected wrong total_photos, optimize=False: exit=1
+Traceback (most recent call last):
+  File "/var/folders/ht/xtw8n43s0p1_tw14rhzlz4pc0000gn/T/task5-check-fsy3cs87/before.py", line 32, in <module>
+    assert before(frame) == after(frame), case
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0
+
+before, injected wrong total_photos, optimize=True: exit=0
+Baseline: b2a7d8ba5bbaef68c4951717912359e634b32274
+Seed 42: 200 complete return dictionaries equal; input frames unchanged.
+None, empty input and missing-column exception behavior equal.
+
+after, injected wrong total_photos, optimize=False: exit=1
+Traceback (most recent call last):
+  File "/var/folders/ht/xtw8n43s0p1_tw14rhzlz4pc0000gn/T/task5-check-fsy3cs87/after.py", line 34, in <module>
+    raise AssertionError(f"Return mismatch at case {case}")
+AssertionError: Return mismatch at case 0
+
+after, injected wrong total_photos, optimize=True: exit=1
+Traceback (most recent call last):
+  File "/var/folders/ht/xtw8n43s0p1_tw14rhzlz4pc0000gn/T/task5-check-fsy3cs87/after.py", line 34, in <module>
+    raise AssertionError(f"Return mismatch at case {case}")
+AssertionError: Return mismatch at case 0
+
+after, unmodified aggregation, optimize=False: exit=0
+Baseline: b2a7d8ba5bbaef68c4951717912359e634b32274
+Seed 42: 200 complete return dictionaries equal; input frames unchanged.
+None, empty input and missing-column exception behavior equal.
+
+after, unmodified aggregation, optimize=True: exit=0
+Baseline: b2a7d8ba5bbaef68c4951717912359e634b32274
+Seed 42: 200 complete return dictionaries equal; input frames unchanged.
+None, empty input and missing-column exception behavior equal.

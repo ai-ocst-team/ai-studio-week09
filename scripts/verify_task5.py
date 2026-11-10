@@ -14,6 +14,7 @@ exec(compile(source, f"{BASELINE}:{MODULE}", "exec"), namespace)
 before = namespace["aggregate_photo_insights"]
 after = runpy.run_path(MODULE)["aggregate_photo_insights"]
 rng = random.Random(42)
+compared_cases = 0
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", UserWarning)
     for case in range(200):
@@ -25,17 +26,21 @@ with warnings.catch_warnings():
             "tags": [rng.sample([" a ", "b", "c", "d", "e", "f", "g", ""], rng.randrange(5)) for _ in range(size)],
         })
         original = frame.copy(deep=True)
-        assert before(frame) == after(frame), case
+        if before(frame) != after(frame):
+            raise AssertionError(f"Return mismatch at case {case}")
+        compared_cases += 1
         pd.testing.assert_frame_equal(frame, original)
 for frame in (None, pd.DataFrame()):
-    assert before(frame) == after(frame)
+    if before(frame) != after(frame):
+        raise AssertionError("Empty-input return mismatch")
 for function in (before, after):
     try:
         function(pd.DataFrame({"id": [1]}))
     except ValueError as error:
-        assert str(error) == "데이터프레임 필수 열 누락: final_score, captured_at, tags"
+        if str(error) != "데이터프레임 필수 열 누락: final_score, captured_at, tags":
+            raise AssertionError(f"Unexpected missing-column error: {error}")
     else:
         raise AssertionError("Missing-column input did not raise ValueError")
 print(f"Baseline: {BASELINE}")
-print("Seed 42: 200 complete return dictionaries equal; input frames unchanged.")
+print(f"Seed 42: {compared_cases} complete return dictionaries equal; input frames unchanged.")
 print("None, empty input and missing-column exception behavior equal.")
