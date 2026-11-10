@@ -1,6 +1,6 @@
-# analyze_with_gemini 자체 코드 리뷰
+# analyze_with_gemini AI 보조 자체 코드 리뷰
 
-리뷰일: 2026-11-10. 리뷰어: Codex AI. 요청자: 김도혁. 기준 커밋: `889c73a`. 대상 파일은 `analyze_with_gemini/analyze_with_gemini.py`이며 연결된 클라이언트·검증기·파이프라인도 확인했다. 팀 간 워크숍 리뷰나 Claude 리뷰가 아니다. 팀 내 AI 생성 비중 순위는 확인하지 않았다.
+리뷰일: 2026-11-10. 리뷰 방식: AI 보조 자체 코드 리뷰. 요청자: 김도혁. 기준 커밋: `889c73a`. 대상 파일은 `analyze_with_gemini/analyze_with_gemini.py`이며 연결된 클라이언트·검증기·파이프라인도 확인했다. 팀 간 워크숍 리뷰나 Claude 리뷰가 아니다. 팀 내 AI 생성 비중 순위는 확인하지 않았다.
 
 AI 생성 근거는 `analyze_with_gemini/prompt_log.md`에 기록된 Copilot 구현 요청이다. 해당 문서의 9주차 명세는 고정 Mock, 로그 금지, 통신 오류를 RuntimeError로 변환하도록 요구했다. 아래 두 지적은 10주차 통합 요구와의 접점이며 9주차 계약을 잘못 구현했다고 판단한 것이 아니다.
 
@@ -48,4 +48,4 @@ AI 생성 근거는 `analyze_with_gemini/prompt_log.md`에 기록된 Copilot 구
 
 ## 처리 상태
 
-새 자체 리뷰와 재현 자료 작성 완료. R1·R2의 제품 코드 수정은 미실행이며 별도 feat/fix와 담당자 협의가 필요하다. 팀 간 교차 리뷰 코멘트 2건 요건은 이 문서로 완료 처리하지 않는다.
+AI 보조 자체 코드 리뷰와 재현 자료 작성 완료. R1·R2의 제품 코드 수정은 미실행이며 별도 feat/fix와 담당자 협의가 필요하다. 팀 간 교차 리뷰 코멘트 2건 요건은 이 문서로 완료 처리하지 않는다.
