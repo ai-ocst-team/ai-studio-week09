@@ -42,7 +42,7 @@ AI 생성 근거는 `aggregate_photo_insights/prompt_log.md`와 생성 커밋 `e
 
 [보안 점검](SECURITY_CHECKLIST.md)과 [김도혁 AI 협업 기록](ai_log/10주차_김도혁.md)을 참조한다. `.env` 경로는 현재 추적 목록과 로컬 ref 이력에서 발견되지 않았다. 모든 과거 비밀값 노출이 없었다는 판정은 아니다.
 
-AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 아직 확인되지 않았다. 따라서 사람의 AI 통제 기록 요건 전체를 완료로 표시하지 않는다. 5주차 원본 체크리스트, 실제 교차 리뷰 2건, 사람의 판단 확인이 남았다. PR 생성·push·merge·최종 제출은 수행하지 않았다.
+AI 협업 기록 2건은 리팩터링과 증거·검증 코드 보완으로 구성했다. 2026-11-11 김도혁이 문서에서 리팩터링 수용과 직접 판단 완료를 확인했다. 5주차 원본 체크리스트 대조, 외부 자료 출처 확인 또는 미사용 확인, 실제 교차 리뷰 요건은 남았다. PR 생성·push·원격 main 병합·최종 제출은 수행하지 않았다.
 
 ## Claude AI 리뷰 후속 검증 · 2026-11-10
 
@@ -54,7 +54,7 @@ AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 �
 | 3. 검색 범위가 문구보다 좁음 | 수용 | 검색 대상에 `scripts` 포함, 보안 문서에 대상 경로 명시 |
 | 4. 최적화 실행에서 비교 생략 | 수용 | 검증용 assert를 명시적 비교·예외로 변경. 정상 코드 일반·`-O` 실행 성공, 의도적으로 잘못된 total_photos를 반환하면 두 모드 모두 실패 |
 
-재현 명령은 `.venv/bin/python scripts/audit_task5.py`, `.venv/bin/python scripts/verify_task5.py`, `.venv/bin/python -O scripts/verify_task5.py`다. `evidence/task5/optimization_check.txt`에 변경 전후 오류 주입 결과를 저장했다. 과거 98개 테스트 결과는 기준 `b2a7d8b`와 현재 Task 5 브랜치의 결과다. 원격 main `5ea3e8c`에는 파이프라인이 추가됐으며, 앞선 임시 디렉터리 검증에서 전체 테스트 import 충돌이 확인됐다. 최신 main 통합은 아직 수행하지 않았다.
+재현 명령은 `.venv/bin/python scripts/audit_task5.py`, `.venv/bin/python scripts/verify_task5.py`, `.venv/bin/python -O scripts/verify_task5.py`다. `evidence/task5/optimization_check.txt`에 변경 전후 오류 주입 결과를 저장했다. 과거 98개 테스트 결과는 기준 `b2a7d8b`와 현재 Task 5 브랜치의 결과다. 원격 main `5ea3e8c`에는 파이프라인이 추가됐으며, 앞선 임시 디렉터리 검증에서 전체 테스트 import 충돌이 확인됐다. 해당 검증 시점에는 최신 main 통합 전이었으며, 이후 아래 통합 기록에서 완료했다.
 
 후속 수정 커밋: `8868455` (`fix: preserve audit commands and verification under optimization`).
 
@@ -69,8 +69,16 @@ AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 �
 - `.venv/bin/python scripts/verify_task5.py`: 합성 입력 200건 동작 비교 통과.
 - 경고는 기존 Pillow getdata 폐기 예고이며 통합 테스트에서도 발생해 총 9개다.
 
-Task 5 구현과 팀 main 통합 검증은 완료했다. 사람의 판단·실제 교차 리뷰 인정 여부·보안 미확인 항목은 앞선 대기 상태를 유지한다. push·PR·merge는 아직 수행하지 않았다.
+Task 5 구현과 팀 main 통합 검증은 완료했다. 사람의 직접 판단은 2026-11-11 사용자 문서 확인으로 반영했다. 실제 교차 리뷰 인정 여부·보안 미확인 항목은 대기 상태를 유지한다. push·PR·merge는 아직 수행하지 않았다.
 
 ## analyze_with_gemini AI 보조 자체 코드 리뷰
 
 [AI 보조 자체 코드 리뷰](docs/reviews/analyze_with_gemini_review.md)를 작성했다. 모듈 테스트 43개, 전체 103개가 통과했다. 별도 재현에서 비Mock 요청에도 고정 Mock이 반환되는 점과 통신 실패 시 다음 사진 처리가 중단되는 점을 확인했다. Task 1·3와 정책·구현 범위를 맞추기 위해 제품 코드 수정은 보류했다. 이 리뷰는 팀 간 교차 리뷰로 계산하지 않는다.
+
+## 진행상황 · 2026-11-11 문서 점검
+
+- 리팩터링 수용 및 AI 협업 직접 검토: 사용자 문서 확인 반영 완료.
+- AI 기록 2건: 집계 리팩터링, 증거·검증 코드 보완. 삭제된 보안 협업 기록은 복원하지 않았다.
+- 코드 검증: 최근 전체 103 passed, 9 warnings. 이번 변경은 문서만 수정해 테스트를 재실행하지 않았다.
+- 보안: S1·S2 등은 사용자 확인과 도구 검증 범위를 구분했다. S3 자료 출처·라이선스 또는 외부 자료 미사용 확인, 5주차 원본 대조가 남았다. S6의 `.env*` 경로 이력 0건은 전체 비밀값 감사와 구분한다.
+- 다음 작업: 남은 제출 요건 확인 후 브랜치 push·PR 생성·팀 리뷰. 팀 간 교차 리뷰 요건은 자체 리뷰로 완료 처리하지 않는다.
