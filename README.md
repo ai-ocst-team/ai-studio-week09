@@ -43,3 +43,17 @@ AI 생성 근거는 `aggregate_photo_insights/prompt_log.md`와 생성 커밋 `e
 [보안 점검](SECURITY_CHECKLIST.md)과 [김도혁 AI 협업 기록](ai_log/10주차_김도혁.md)을 참조한다. `.env` 경로는 현재 추적 목록과 로컬 ref 이력에서 발견되지 않았다. 모든 과거 비밀값 노출이 없었다는 판정은 아니다.
 
 AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 아직 확인되지 않았다. 따라서 사람의 AI 통제 기록 요건 전체를 완료로 표시하지 않는다. 5주차 원본 체크리스트, 실제 교차 리뷰 2건, 사람의 판단 확인이 남았다. PR 생성·push·merge·최종 제출은 수행하지 않았다.
+
+## Claude AI 리뷰 후속 검증 · 2026-11-10
+
+로컬에 제공된 `evidence/task5/claude_review_findings.md`를 근거로 검증했다. 이 문서는 별도 Claude AI 리뷰 기록이며, 이전 CLI 호출 실패 JSON이 성공했다는 뜻은 아니다. 사람 교차 리뷰 2건에는 계산하지 않는다.
+
+| 리뷰 항목 | 판단 | 반영·검증 |
+|---|---|---|
+| 2. 증거 명령 인용 부호 누락 | 수용 | `scripts/audit_task5.py`가 셸 인용을 보존하고 실제 zsh 실행 결과를 저장. 이력 조회·추적 파일 필터·검색 명령 재실행 성공 |
+| 3. 검색 범위가 문구보다 좁음 | 수용 | 검색 대상에 `scripts` 포함, 보안 문서에 대상 경로 명시 |
+| 4. 최적화 실행에서 비교 생략 | 수용 | 검증용 assert를 명시적 비교·예외로 변경. 정상 코드 일반·`-O` 실행 성공, 의도적으로 잘못된 total_photos를 반환하면 두 모드 모두 실패 |
+
+재현 명령은 `.venv/bin/python scripts/audit_task5.py`, `.venv/bin/python scripts/verify_task5.py`, `.venv/bin/python -O scripts/verify_task5.py`다. `evidence/task5/optimization_check.txt`에 변경 전후 오류 주입 결과를 저장했다. 과거 98개 테스트 결과는 기준 `b2a7d8b`와 현재 Task 5 브랜치의 결과다. 원격 main `5ea3e8c`에는 파이프라인이 추가됐으며, 앞선 임시 디렉터리 검증에서 전체 테스트 import 충돌이 확인됐다. 최신 main 통합은 아직 수행하지 않았다.
+
+후속 수정 커밋: `8868455` (`fix: preserve audit commands and verification under optimization`).
