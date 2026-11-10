@@ -1,0 +1,3 @@
+R1: USE_MOCK=false still returns fixed Mock score 8.0; no [MOCK] output captured.
+R2: first-image timeout escapes as RuntimeError; second image not analyzed (client calls=1).
+C1: duplicated tag/focus rules currently match; no current value mismatch found.
