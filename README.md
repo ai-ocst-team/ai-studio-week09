@@ -23,7 +23,7 @@ AI 생성 근거는 `aggregate_photo_insights/prompt_log.md`와 생성 커밋 `e
 |---|---|---|
 | 집계 함수의 top/bottom 결과 생성 | 동일한 변환이 두 곳에 있어 수정 시 불일치 가능 | 작은 함수로 추출. 정렬 로직은 각 위치에 유지 |
 | 분석 모듈과 응답 검증기의 `_TAG_VOCABULARY`, `_FOCUS_STATUSES` | 현재 허용값은 같지만 별도로 정의됨 | Task 2와 공통 규칙 소유권 협의 필요. 이번에는 변경 안 함 |
-| 분석 반환 `aesthetic_tags`와 정제·집계 입력 `tags` | 범주별 dict와 문자열 리스트 계약이 다름. 현재 루트 파이프라인 없음 | Task 1·2에서 매핑과 평탄화 규칙을 정하고 Task 4에서 검증 필요 |
+| 분석 반환 `aesthetic_tags`와 정제·집계 입력 `tags` | 초기 기준 b2a7d8b에서는 범주별 dict와 문자열 리스트 계약이 다르고 루트 파이프라인이 없었음 | 최신 main의 pipeline.py에 평탄화·중복 제거 구현됨. 아래 통합 검증 결과 참조 |
 | `analyze_with_gemini/llm_client.py` 정상 호출 | 고정 Mock JSON 반환. docstring에만 `[MOCK]`, 실행 로그와 `USE_MOCK` 스위치 없음 | Task 3 구현 대상. 이번 리팩터링과 분리 |
 | `prepare_photo/prepare_photo.py` 입력 경로 | 로컬 파일을 직접 읽음. 웹 업로드 서비스용 경로 제한은 없음 | 향후 서비스 경계에서 허용 경로·용량 정책 필요. 현재 로컬 함수의 계약 변경 보류 |
 
@@ -57,3 +57,16 @@ AI 협업 단위 2건을 기록했으나 사람의 직접 검토와 판단은 �
 재현 명령은 `.venv/bin/python scripts/audit_task5.py`, `.venv/bin/python scripts/verify_task5.py`, `.venv/bin/python -O scripts/verify_task5.py`다. `evidence/task5/optimization_check.txt`에 변경 전후 오류 주입 결과를 저장했다. 과거 98개 테스트 결과는 기준 `b2a7d8b`와 현재 Task 5 브랜치의 결과다. 원격 main `5ea3e8c`에는 파이프라인이 추가됐으며, 앞선 임시 디렉터리 검증에서 전체 테스트 import 충돌이 확인됐다. 최신 main 통합은 아직 수행하지 않았다.
 
 후속 수정 커밋: `8868455` (`fix: preserve audit commands and verification under optimization`).
+
+## 최신 main 통합 · 2026-11-10
+
+`origin/main`의 `5ea3e8c`를 작업 브랜치에 병합했다. 병합 커밋은 `f63076e`이며 충돌은 없었다. 파이프라인·CLI·통합 테스트 5건이 포함됐다.
+
+병합 직후 전체 pytest는 수집 단계에서 실패했다. 기존 단위 테스트는 `prepare_photo`, `clean_analysis_dataframe`을 단일 모듈로 import하지만 파이프라인은 같은 이름을 패키지로 import해 충돌했다. 두 디렉터리에 공개 함수를 내보내는 `__init__.py`를 추가했다. 함수 본문과 호출 계약은 변경하지 않았다. 수정 커밋은 `df1f249`다.
+
+- `.venv/bin/python -m pytest -q`: **103 passed, 9 warnings**. [전체 로그](evidence/task5/pytest_integrated.txt).
+- `.venv/bin/python main.py --help`: exit 0.
+- `.venv/bin/python scripts/verify_task5.py`: 합성 입력 200건 동작 비교 통과.
+- 경고는 기존 Pillow getdata 폐기 예고이며 통합 테스트에서도 발생해 총 9개다.
+
+Task 5 구현과 팀 main 통합 검증은 완료했다. 사람의 판단·실제 교차 리뷰 인정 여부·보안 미확인 항목은 앞선 대기 상태를 유지한다. push·PR·merge는 아직 수행하지 않았다.
