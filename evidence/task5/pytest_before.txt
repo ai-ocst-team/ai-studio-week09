@@ -1,0 +1,12 @@
+........................................................................ [ 73%]
+..........................                                               [100%]
+=============================== warnings summary ===============================
+prepare_photo/test_prepare_photo.py::test_t01_jpeg_with_exif
+prepare_photo/test_prepare_photo.py::test_t02_png_without_exif
+prepare_photo/test_prepare_photo.py::test_t03_huge_image
+prepare_photo/test_prepare_photo.py::test_no_upscale_small_image
+  /private/var/folders/ht/xtw8n43s0p1_tw14rhzlz4pc0000gn/T/task5-baseline-6pwvhm9d/prepare_photo/prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+98 passed, 4 warnings in 0.91s

@@ -1,0 +1,36 @@
+$ git rev-parse HEAD main origin/main
+c8104d3e7e14803f649f38434a0ed94260c0ae8f
+b2a7d8ba5bbaef68c4951717912359e634b32274
+5ea3e8ca9d23c85178ff2310afe79ead016458d4
+
+stderr: (empty)
+exit=0
+
+$ git rev-parse --is-shallow-repository
+false
+
+stderr: (empty)
+exit=0
+
+$ git log --all --full-history '--format=%h %s' -- '**/.env*' '.env*'
+(no stdout)
+stderr: (empty)
+exit=0
+
+$ git log --all --full-history '--format=%h %s' -- '**.env*'
+(no stdout)
+stderr: (empty)
+exit=0
+
+$ git check-ignore .env nested/.env .env.production
+.env
+nested/.env
+
+stderr: (empty)
+exit=0
+
+$ .venv/bin/python -c 'import subprocess; from pathlib import Path; paths = subprocess.check_output(['"'"'git'"'"', '"'"'ls-files'"'"', '"'"'--cached'"'"', '"'"'-z'"'"']).decode().split('"'"'\0'"'"'); print('"'"'\n'"'"'.join(p for p in paths if Path(p).name.startswith('"'"'.env'"'"')) or '"'"'(no matching paths)'"'"')'
+(no matching paths)
+
+stderr: (empty)
+exit=0

@@ -8,6 +8,18 @@ from typing import Any
 import pandas as pd
 
 
+def _tag_records(records: pd.DataFrame) -> list[dict[str, Any]]:
+    """정렬된 태그 통계를 반환 계약의 자료형과 정밀도로 변환한다."""
+    return [
+        {
+            "tag": str(row["tags"]),
+            "avg_score": round(float(row["avg_score"]), 2),
+            "count": int(row["count"]),
+        }
+        for _, row in records.iterrows()
+    ]
+
+
 def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
     """VLM 기반 사진 감성·구도 심층 비평 및 스마트 Culling 시스템의 사진 분석 레코드를 정제 및 집계합니다.
 
@@ -112,28 +124,14 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
                 by=["avg_score", "count"], ascending=[False, False]
             ).head(5)
 
-            top_tags = [
-                {
-                    "tag": str(row["tags"]),
-                    "avg_score": round(float(row["avg_score"]), 2),
-                    "count": int(row["count"]),
-                }
-                for _, row in top_records.iterrows()
-            ]
+            top_tags = _tag_records(top_records)
 
             # 하위 태그 (평균 점수 오름차순, 동점 시 등장 횟수 내림차순 정렬)
             bottom_records = reliable_tags.sort_values(
                 by=["avg_score", "count"], ascending=[True, False]
             ).head(5)
 
-            bottom_tags = [
-                {
-                    "tag": str(row["tags"]),
-                    "avg_score": round(float(row["avg_score"]), 2),
-                    "count": int(row["count"]),
-                }
-                for _, row in bottom_records.iterrows()
-            ]
+            bottom_tags = _tag_records(bottom_records)
 
     return {
         "total_photos": total_photos,

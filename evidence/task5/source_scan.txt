@@ -1,0 +1,18 @@
+$ rg -n 'print\(|logging|requests|http|api_key|API_KEY|password|secret|token|subprocess|eval\(|exec\(' --glob '*.py' prepare_photo analyze_with_gemini validate_vlm_response clean_analysis_dataframe aggregate_photo_insights scripts
+scripts/audit_task5.py:4:import subprocess
+scripts/audit_task5.py:11:        result = subprocess.run(["zsh", "-f", "-c", command], text=True, capture_output=True)
+scripts/audit_task5.py:27:    [".venv/bin/python", "-c", "import subprocess; from pathlib import Path; paths = subprocess.check_output(['git', 'ls-files', '--cached', '-z']).decode().split('\\0'); print('\\n'.join(p for p in paths if Path(p).name.startswith('.env')) or '(no matching paths)')"],
+scripts/audit_task5.py:30:    ["rg", "-n", r"print\(|logging|requests|http|api_key|API_KEY|password|secret|token|subprocess|eval\(|exec\(",
+scripts/audit_task5.py:34:print("Audit commands executed in zsh; quoted commands, stdout, stderr and exit codes recorded.")
+scripts/verify_task5.py:4:import subprocess
+scripts/verify_task5.py:11:source = subprocess.check_output(["git", "show", f"{BASELINE}:{MODULE}"], text=True)
+scripts/verify_task5.py:13:exec(compile(source, f"{BASELINE}:{MODULE}", "exec"), namespace)
+scripts/verify_task5.py:44:print(f"Baseline: {BASELINE}")
+scripts/verify_task5.py:45:print(f"Seed 42: {compared_cases} complete return dictionaries equal; input frames unchanged.")
+scripts/verify_task5.py:46:print("None, empty input and missing-column exception behavior equal.")
+analyze_with_gemini/test_analyze_with_gemini.py:188:    import subprocess
+analyze_with_gemini/test_analyze_with_gemini.py:200:print('ok')
+analyze_with_gemini/test_analyze_with_gemini.py:202:    completed = subprocess.run(
+
+stderr: (empty)
+exit=0
