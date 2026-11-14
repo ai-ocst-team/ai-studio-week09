@@ -305,7 +305,7 @@ Gemini WebUI가 작성한 코드는 구조가 매우 탄탄하고 1차 프롬프
 """photo_grader - 모듈 3: pandas 기반 통계 및 시계열 분석.
 
 파일명: photo_analytics.py
-담당자: 하정윤 (아트서강)
+담당자: 하정윤 \
 """
 from typing import Any
 import pandas as pd
@@ -452,7 +452,7 @@ def aggregate_photo_insights(df_analyses: pd.DataFrame) -> dict[str, Any]:
 
 ### 5.1 테스트 코드 (`test_photo_analytics.py`)
 
-> T09~T12 4대 표준 케이스와 함께, 코드 리딩에서 발견한 **태그 공백 정규화 버그 검증 테스트** 및 **메모리 최적화 검증**을 추가하여 무결성을 입증함.
+> T09~T12 4대 표준 케이스와 함께, 코드 리딩에서 발견한 **태그 공백 처리 검증 테스트** 및 **메모리 최적화 검증**을 추가하여 무결성을 입증함.
 
 ```python
 # -*- coding: utf-8 -*-
@@ -625,7 +625,7 @@ git commit -m "feat: 테스트 함수 업로드"
 - 코드 리딩에서 발견한 결함:
   1) 태그 공백 미정규화(`strip` 누락): `" 자연광 "`과 `"자연광"`이 서로 다른 태그로 인식되어 신뢰성 필터(`count >= 2`)에서 둘 다 누락되는 데이터 정제 결함.
   2) 전체 컬럼 복사(`df_analyses.copy()`): 수백 장 배치 시 불필요한 고용량 비평문/바이너리 컬럼까지 복제되어 메모리 낭비 유발.
-  3) 미사용 `import numpy as np` 선언으로 인한 린터(F401) 경고.
+  3) 미사용 `import numpy as np` 선언으로 인한 경고.
   4) `apply(lambda)` 행 단위 순회로 인한 처리 속도 저하.
 - 수정 내역: 커밋 `e2f5a7c`
   - `df_tags["tags"].astype(str).str.strip()`으로 태그 공백 완전 정규화 및 벡터화 전환.
