@@ -114,16 +114,18 @@
   }
 }
 ```
-- 상세 프롬프트 템플릿은 `prompts/photo_analysis_prompt.txt`를 참고하십시오.
+- `task`는 `prompts/photo_analysis_prompt.txt`를 UTF-8로 읽고 앞뒤 공백을 제거한 내용입니다. 실행 위치와 무관하게 모듈 경로 기준으로 파일을 찾습니다. `safe_exif`, `hint`, `response_contract`는 코드에서 별도 JSON 필드로 구성합니다.
 
 ### `llm_client` Mock / Real 전환 규칙 (`USE_MOCK`)
-- 모듈 상수 `USE_MOCK` 및 환경 변수 `USE_MOCK`(기본값 `"true"`)으로 Mock 모드를 제어합니다.
-- Mock 활성화 시(`_generate_mock`): 표준 로거(`logging.getLogger(__name__)`)로 `[MOCK]` 실행 로그를 남기고 응답 계약에 맞는 고정 JSON 문자열을 반환합니다.
+- 환경 변수 `USE_MOCK` 하나로 제어하며 호출할 때마다 조회합니다. 미설정 기본값은 `"true"`입니다. 별도 모듈 상수 스위치는 사용하지 않습니다.
+- 앞뒤 공백·대소문자를 정규화한 뒤 `true/1/yes/on`은 Mock, `false/0/no/off`는 Real로 해석하고 그 외 값은 `ValueError`로 거부합니다. 인자 검사는 모드 선택 전에 수행합니다.
+- `run_pipeline(use_mock=...)`는 해당 환경 변수를 설정합니다. 파이프라인 호출 후 환경 복원·동시 실행 모드 격리는 현재 구현 범위 밖입니다.
+- Mock 활성화 시(`_generate_mock`): INFO 수준 표준 로거(`logging.getLogger(__name__)`)로 `[MOCK]` 실행 로그를 남기고 응답 계약에 맞는 고정 JSON 문자열을 반환합니다.
 - Mock 비활성화 시(`_generate_real`): `NotImplementedError`를 발생시킵니다 (13주차 실제 Gemini API 연동 지점).
 
 ### 예외 정책
 - `TypeError`: `photo`, `model`, `hint` 또는 `llm_client` 인자 최상위 타입 오류
-- `ValueError`: 필수 키 누락, 빈 `upload_bytes`, 잘못된 `sha256`/EXIF 값, 공백 `model`, 빈 `prompt`, 비문자열 VLM 응답, 또는 `aesthetic_tags` 6개 범주 불일치
+- `ValueError`: 필수 키 누락, 빈 `upload_bytes`, 잘못된 `sha256`/EXIF 값, 공백 `model`, 빈 `prompt`, 비문자열 VLM 응답, 또는 `aesthetic_tags` 6개 범주 불일치; 잘못된 `USE_MOCK` 값, 프롬프트 파일 읽기 실패·빈 내용도 포함
 - `RuntimeError`: `llm_client.generate_analysis` 호출 중 `(TimeoutError, ConnectionError, OSError)` 발생 시 `"VLM 통신 실패"`로 래핑
 - `NotImplementedError`: `USE_MOCK` 비활성화 상태에서 실제 API 호출 시도 시
 

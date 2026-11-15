@@ -1,23 +1,46 @@
-"""[MOCK] 외부 VLM 의존성의 경계. USE_MOCK 전환을 통해 Mock/실제 API 분기를 제공한다."""
+"""VLM 호출 경계: USE_MOCK 기본값은 true이며 실제 API는 아직 연결하지 않는다."""
 import json
 import logging
 import os
 
 logger = logging.getLogger(__name__)
 
-USE_MOCK = True
-_MOCK_TRUE_VALUES = frozenset({"true", "1", "yes", "on"})
+
+def _generate_real(image_bytes: bytes, model: str, prompt: str) -> str:
+    """13주차 API 구현 교체 지점. 현재는 네트워크 요청 없이 명시적으로 실패한다."""
+    raise NotImplementedError("실제 VLM API는 아직 연결되지 않았습니다. USE_MOCK=true를 사용하세요.")
+
+
+def _validate_request(image_bytes: bytes, model: str, prompt: str) -> None:
+    """모드 선택 전에 요청 인자의 타입과 빈 값을 기존 순서대로 검사한다."""
+    if not isinstance(image_bytes, bytes):
+        raise TypeError("image_bytes는 bytes여야 합니다.")
+    if not isinstance(model, str):
+        raise TypeError("model은 str이어야 합니다.")
+    if not isinstance(prompt, str):
+        raise TypeError("prompt는 str이어야 합니다.")
+    if not image_bytes:
+        raise ValueError("image_bytes는 비어 있을 수 없습니다.")
+    if not model.strip():
+        raise ValueError("model은 공백일 수 없습니다.")
+    if not prompt.strip():
+        raise ValueError("prompt는 공백일 수 없습니다.")
 
 
 def _is_mock_enabled() -> bool:
-    """모듈 상수 USE_MOCK 및 환경 변수 USE_MOCK을 기준으로 Mock 모드 여부를 반환한다."""
-    env_flag = os.getenv("USE_MOCK", "true").strip().lower()
-    return bool(USE_MOCK) and env_flag in _MOCK_TRUE_VALUES
+    """호출 시점의 USE_MOCK을 해석하고 허용하지 않은 설정은 거부한다."""
+    mode = os.getenv("USE_MOCK", "true").strip().lower()
+    if mode in {"false", "0", "no", "off"}:
+        return False
+    if mode not in {"true", "1", "yes", "on"}:
+        raise ValueError("USE_MOCK은 true/1/yes/on 또는 false/0/no/off여야 합니다.")
+    return True
 
 
-def _generate_mock(model: str) -> str:
-    """[MOCK] 고정된 가상 분석 JSON 문자열을 반환한다."""
-    logger.info("[MOCK] 실제 VLM API를 호출하지 않고 가상 응답을 반환합니다. (model=%s)", model)
+def _generate_mock() -> str:
+    """[MOCK] 입력 내용 없는 실행 로그와 독립된 가상 분석 JSON을 생성한다."""
+    # 이미지·프롬프트·EXIF·사용자 의도 등 입력 내용은 로그에 출력하지 않는다.
+    logger.info("[MOCK] 실제 VLM 호출 없이 가상 분석 응답을 반환합니다.")
     response = {
         "final_score": 8.0,
         "composition_score": 8.0,
@@ -37,15 +60,12 @@ def _generate_mock(model: str) -> str:
     return json.dumps(response, ensure_ascii=False, allow_nan=False)
 
 
-def _generate_real(image_bytes: bytes, model: str, prompt: str) -> str:
-    """실제 Gemini VLM API 호출 경계 (13주차 API 키 연동 후 구현 예정)."""
-    raise NotImplementedError(
-        "실제 Gemini API 연동은 13주차 API 키 연결 이후 구현됩니다. USE_MOCK=true 모드를 사용하세요."
-    )
-
-
 def generate_analysis(image_bytes: bytes, model: str, prompt: str) -> str:
-    """[MOCK] USE_MOCK 설정에 따라 가상 분석 JSON을 반환하거나 실제 API 경계를 호출한다.
+    """[MOCK] 모드에서는 가상 JSON을, 비Mock 모드에서는 실제 API 경계를 사용한다.
+
+    USE_MOCK 환경 변수를 호출 시점마다 읽는다. 미설정 시 true이며
+    true/1/yes/on 및 false/0/no/off를 지원한다(대소문자·주변 공백 무시).
+    파이프라인은 use_mock 인자를 이 환경 변수에 반영한다.
 
     Args:
         image_bytes: 비어 있지 않은 이미지 바이트.
@@ -57,22 +77,10 @@ def generate_analysis(image_bytes: bytes, model: str, prompt: str) -> str:
 
     Raises:
         TypeError: 인자의 타입이 잘못된 경우.
-        ValueError: 인자가 비어 있거나 공백뿐인 경우.
-        NotImplementedError: USE_MOCK이 비활성화된 상태에서 실제 API 호출을 시도한 경우.
+        ValueError: 인자가 비어 있거나 USE_MOCK 설정이 허용값이 아닌 경우.
+        NotImplementedError: 비Mock 모드에서 아직 미구현인 실제 API 경계에 도달한 경우.
     """
-    if not isinstance(image_bytes, bytes):
-        raise TypeError("image_bytes는 bytes여야 합니다.")
-    if not isinstance(model, str):
-        raise TypeError("model은 str이어야 합니다.")
-    if not isinstance(prompt, str):
-        raise TypeError("prompt는 str이어야 합니다.")
-    if not image_bytes:
-        raise ValueError("image_bytes는 비어 있을 수 없습니다.")
-    if not model.strip():
-        raise ValueError("model은 공백일 수 없습니다.")
-    if not prompt.strip():
-        raise ValueError("prompt는 공백일 수 없습니다.")
-
+    _validate_request(image_bytes, model, prompt)
     if _is_mock_enabled():
-        return _generate_mock(model=model)
+        return _generate_mock()
     return _generate_real(image_bytes=image_bytes, model=model, prompt=prompt)

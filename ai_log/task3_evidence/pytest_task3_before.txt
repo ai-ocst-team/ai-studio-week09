@@ -1,0 +1,96 @@
+UTC: 2026-11-15T01:28:57.135045+00:00
+USE_MOCK: unset before test session
+Command: python -B -X utf8 -m pytest -q --tb=short -p no:cacheprovider --basetemp=C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\task3_test_temp\ab1b00071d8e4779bf6d46f90d132877 tests/test_llm_client.py
+F.....FFFFFFFFF....FFFF                                                  [100%]
+================================== FAILURES ===================================
+____________ test_default_mock_returns_valid_contract_and_safe_log ____________
+tests\test_llm_client.py:29: in test_default_mock_returns_valid_contract_and_safe_log
+    assert "[MOCK]" in caplog.text
+E   AssertionError: assert '[MOCK]' in ''
+E    +  where '' = <_pytest.logging.LogCaptureFixture object at 0x0000028CBB9825A0>.text
+___________ test_false_settings_do_not_silently_return_mock[false] ____________
+tests\test_llm_client.py:46: in test_false_settings_do_not_silently_return_mock
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+_____________ test_false_settings_do_not_silently_return_mock[0] ______________
+tests\test_llm_client.py:46: in test_false_settings_do_not_silently_return_mock
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+_____________ test_false_settings_do_not_silently_return_mock[no] _____________
+tests\test_llm_client.py:46: in test_false_settings_do_not_silently_return_mock
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+____________ test_false_settings_do_not_silently_return_mock[off] _____________
+tests\test_llm_client.py:46: in test_false_settings_do_not_silently_return_mock
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+__________ test_false_settings_do_not_silently_return_mock[ FALSE ] ___________
+tests\test_llm_client.py:46: in test_false_settings_do_not_silently_return_mock
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+_______________________ test_invalid_mode_is_rejected[] _______________________
+tests\test_llm_client.py:55: in test_invalid_mode_is_rejected
+    with pytest.raises(ValueError, match="USE_MOCK"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+____________________ test_invalid_mode_is_rejected[flase] _____________________
+tests\test_llm_client.py:55: in test_invalid_mode_is_rejected
+    with pytest.raises(ValueError, match="USE_MOCK"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+______________________ test_invalid_mode_is_rejected[2] _______________________
+tests\test_llm_client.py:55: in test_invalid_mode_is_rejected
+    with pytest.raises(ValueError, match="USE_MOCK"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ValueError
+_______________________ test_mode_is_read_at_call_time ________________________
+tests\test_llm_client.py:63: in test_mode_is_read_at_call_time
+    with pytest.raises(NotImplementedError):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE NotImplementedError
+_____________________ test_pipeline_switch_reaches_client _____________________
+tests\test_llm_client.py:90: in test_pipeline_switch_reaches_client
+    assert "[MOCK]" in caplog.text
+E   AssertionError: assert '[MOCK]' in ''
+E    +  where '' = <_pytest.logging.LogCaptureFixture object at 0x0000028CBB983DD0>.text
+_________________ test_external_prompt_and_hint_stay_separate _________________
+tests\test_llm_client.py:101: in test_external_prompt_and_hint_stay_separate
+    monkeypatch.setattr(analyzer, "_PROMPT_PATH", template)
+E   AttributeError: <module 'analyze_with_gemini.analyze_with_gemini' from 'C:\\Users\\psang\\Documents\\Codex\\2026-09-22\\dlr\\work\\week9\\ai-studio-week09-review\\analyze_with_gemini\\analyze_with_gemini.py'> has no attribute '_PROMPT_PATH'
+______________ test_missing_or_empty_prompt_stops_request[False] ______________
+tests\test_llm_client.py:125: in test_missing_or_empty_prompt_stops_request
+    monkeypatch.setattr(analyzer, "_PROMPT_PATH", template)
+E   AttributeError: <module 'analyze_with_gemini.analyze_with_gemini' from 'C:\\Users\\psang\\Documents\\Codex\\2026-09-22\\dlr\\work\\week9\\ai-studio-week09-review\\analyze_with_gemini\\analyze_with_gemini.py'> has no attribute '_PROMPT_PATH'
+______________ test_missing_or_empty_prompt_stops_request[True] _______________
+tests\test_llm_client.py:125: in test_missing_or_empty_prompt_stops_request
+    monkeypatch.setattr(analyzer, "_PROMPT_PATH", template)
+E   AttributeError: <module 'analyze_with_gemini.analyze_with_gemini' from 'C:\\Users\\psang\\Documents\\Codex\\2026-09-22\\dlr\\work\\week9\\ai-studio-week09-review\\analyze_with_gemini\\analyze_with_gemini.py'> has no attribute '_PROMPT_PATH'
+============================== warnings summary ===============================
+tests/test_llm_client.py::test_pipeline_switch_reaches_client
+  C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\ai-studio-week09-review\prepare_photo\prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_llm_client.py::test_default_mock_returns_valid_contract_and_safe_log
+FAILED tests/test_llm_client.py::test_false_settings_do_not_silently_return_mock[false]
+FAILED tests/test_llm_client.py::test_false_settings_do_not_silently_return_mock[0]
+FAILED tests/test_llm_client.py::test_false_settings_do_not_silently_return_mock[no]
+FAILED tests/test_llm_client.py::test_false_settings_do_not_silently_return_mock[off]
+FAILED tests/test_llm_client.py::test_false_settings_do_not_silently_return_mock[ FALSE ]
+FAILED tests/test_llm_client.py::test_invalid_mode_is_rejected[] - Failed: DI...
+FAILED tests/test_llm_client.py::test_invalid_mode_is_rejected[flase] - Faile...
+FAILED tests/test_llm_client.py::test_invalid_mode_is_rejected[2] - Failed: D...
+FAILED tests/test_llm_client.py::test_mode_is_read_at_call_time - Failed: DID...
+FAILED tests/test_llm_client.py::test_pipeline_switch_reaches_client - Assert...
+FAILED tests/test_llm_client.py::test_external_prompt_and_hint_stay_separate
+FAILED tests/test_llm_client.py::test_missing_or_empty_prompt_stops_request[False]
+FAILED tests/test_llm_client.py::test_missing_or_empty_prompt_stops_request[True]
+14 failed, 9 passed, 1 warning in 1.02s
+
+exit_code=1
