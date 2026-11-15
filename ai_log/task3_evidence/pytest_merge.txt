@@ -1,0 +1,16 @@
+UTC: 2026-11-15T01:42:07.814800+00:00
+USE_MOCK: unset before test session
+Command: python -B -X utf8 -m pytest -q --tb=short -p no:cacheprovider --basetemp=C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\task3_test_temp\1870da6e39b84dc4915884650cf9825f
+........................................................................ [ 57%]
+......................................................                   [100%]
+============================== warnings summary ===============================
+prepare_photo/test_prepare_photo.py: 4 warnings
+tests/test_integration.py: 5 warnings
+tests/test_llm_client.py: 3 warnings
+  C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\ai-studio-week09-review\prepare_photo\prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+126 passed, 12 warnings in 3.39s
+
+exit_code=0
