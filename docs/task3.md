@@ -10,8 +10,8 @@
 | prompts/ 템플릿 | 기존 지시문을 분리하고 실제 요청에 연결 | `prompts/photo_analysis_prompt.txt` |
 | 입력·반환 문서 | 함수 타입 힌트·docstring, 요청·반환 규격 안내 | `prompts/README.md` |
 | 테스트 | 전체 126개 통과, 신규 Task 3 테스트 23개 | `tests/test_llm_client.py` |
-| AI 기록 2건 | 기록 1 준비, 후속 리팩터링 기록 미완료 | `ai_log/10주차_박상현.md` |
-| 커밋 | 사용자 검토 후 직접 실행 예정 | 현재 미커밋 |
+| AI 기록 2건 | 기능 구현 및 책임 분리 리팩터링 기록 작성; 두 번째 해시 대기 | `ai_log/10주차_박상현.md` |
+| 커밋 | 기능 커밋 완료, 별도 refactor 커밋 대기 | `8b34747` |
 
 ## 재현
 
@@ -27,6 +27,14 @@ python -B -X utf8 -m pytest -q --tb=short -p no:cacheprovider
 - [기준 재실행: 103 passed](../ai_log/task3_evidence/pytest_baseline_retry.txt)
 - [구현 전 새 요구사항 테스트: 14 failed, 9 passed](../ai_log/task3_evidence/pytest_task3_before.txt)
 - [기능 반영 후 전체: 126 passed](../ai_log/task3_evidence/pytest_feature.txt)
+- [리팩터링 후 전체: 126 passed](../ai_log/task3_evidence/pytest_refactor.txt)
+- [변경 전후 168건 동작 비교](../ai_log/task3_evidence/refactor_parity.txt)
+
+## 리팩터링 검토
+
+`generate_analysis`의 입력 검사·설정 해석·가상 응답 생성을 각각 `_validate_request`, `_is_mock_enabled`, `_generate_mock`로 옮겼습니다. 공개 함수는 세 역할을 연결하는 분기만 남깁니다. 반환값·예외·로그·시그니처를 보존했으며 성능 개선을 주장하지 않습니다.
+
+기능 커밋 `8b347476d41efcea4c9fa6805dab38fcf9f7405b`는 사용자가 2026-11-15 10:33:35 KST에 직접 실행했습니다. 리팩터링은 그 이후 수행했고 별도 커밋을 기다리는 상태입니다.
 
 ## 범위와 후속 작업
 
@@ -36,4 +44,4 @@ python -B -X utf8 -m pytest -q --tb=short -p no:cacheprovider
 
 현재 main에는 팀원의 임시 Task 3 파일이 있으므로 PR에서 `llm_client.py`, `prompts/photo_analysis_prompt.txt`, `tests/test_llm_client.py`의 충돌이 생길 수 있습니다. 통합 시 설정 정책과 프롬프트 파일의 의미를 비교하여 하나의 구현으로 정리하고 전체 테스트를 재실행해야 합니다.
 
-이번 단계는 기능 구현입니다. 사용자의 기능 커밋 후 별도 리팩터링을 진행하고, 실제 해시와 두 번째 AI 기록을 추가합니다. 기존 공통 README·보안 체크리스트·다른 팀원의 AI 기록은 수정하지 않았습니다.
+남은 단계는 사용자의 리팩터링 검토·별도 커밋, 두 번째 해시 반영, 팀 main과 병합 시 계약·충돌 정리 및 재검증입니다. 기존 공통 README·보안 체크리스트·다른 팀원의 AI 기록은 수정하지 않았습니다.
