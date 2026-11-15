@@ -17,7 +17,7 @@
 
 ## .env 미커밋 증적과 범위
 
-실제 명령·표준 출력·종료 코드는 [env_audit.txt](evidence/task5/env_audit.txt)에 저장했다.
+실제 명령·표준 출력·종료 코드는 [env_audit.txt](ai_log/task5_evidence/env_audit.txt)에 저장했다.
 
 ```sh
 git log --all --full-history --format='%h %s' -- '**/.env*' '.env*'

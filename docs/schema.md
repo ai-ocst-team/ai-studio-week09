@@ -41,13 +41,13 @@
 - `image_path`: 존재하는 이미지 파일 경로(`str` 또는 `Path`).
 - 지원 이미지 포맷(`Image.open` 기준): `{"JPEG", "PNG", "WEBP", "MPO"}`
 - `pipeline.py` 파일 탐색 확장자(`SUPPORTED_EXTENSIONS`): `{".jpg", ".jpeg", ".png", ".webp", ".bmp"}`
-- 원본 이미지의 긴 변(`max(image.size)`)이 `3072`px를 초과하면 비율을 유지해 리사이즈한 뒤 RGB `JPEG`(quality=90) 바이트로 인코딩하며, `3072`px 이하이면 원본 파일 바이트를 그대로 `upload_bytes`에 사용합니다.
+- EXIF 방향 보정과 RGB 변환 후 긴 변이 `3072`px를 초과하면 비율을 유지해 리사이즈합니다. 크기와 관계없이 결과 이미지를 `JPEG`(quality=90)로 다시 인코딩한 바이트를 `upload_bytes`에 사용합니다. 원본 EXIF를 저장 인자로 전달하지 않습니다.
 
 ### 출력 스키마 (`dict[str, Any]`)
 | 키 | 타입 | 설명 |
 | --- | --- | --- |
 | `path` | `str` | 입력 이미지 경로 문자열 |
-| `sha256` | `str` | `upload_bytes`의 64자리 16진수 SHA-256 해시 |
+| `sha256` | `str` | 원본 파일 바이트의 64자리 16진수 SHA-256 해시 (`upload_bytes`의 해시가 아님) |
 | `safe_exif` | `dict[str, Any]` | 허용된 화이트리스트 EXIF 키만 추출한 딕셔너리 |
 | `upload_bytes` | `bytes` | VLM 전송용 이미지 바이트 |
 | `dhash` | `str` | 이미지 지각 해시(dHash) |

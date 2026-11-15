@@ -12,7 +12,7 @@ AI 생성 근거는 `aggregate_photo_insights/prompt_log.md`와 생성 커밋 `e
 - 변경 후 `.venv/bin/python -m pytest -q`: 98 passed, 4 warnings.
 - `.venv/bin/python scripts/verify_task5.py`: 합성 입력 200건의 전체 반환값과 원본 불변성 확인. None·빈 입력·필수 열 누락 예외도 비교.
 - 경고는 기존 `Image.getdata()` 사용에 대한 Pillow 폐기 예고다. 이 리팩터링에서 수정하지 않았다.
-- 증거: [수정 전](evidence/task5/pytest_before.txt), [수정 후](evidence/task5/pytest_after.txt), [동작 비교](evidence/task5/parity.txt).
+- 증거: [수정 전](ai_log/task5_evidence/pytest_before.txt), [수정 후](ai_log/task5_evidence/pytest_after.txt), [동작 비교](ai_log/task5_evidence/parity.txt).
 - 리팩터링 커밋: [`0b3a326`](https://github.com/ai-ocst-team/ai-studio-week09/commit/0b3a326), `refactor: extract shared tag result conversion`.
 
 ## 코드 리뷰 및 팀 작업 접점
@@ -64,7 +64,7 @@ AI 협업 기록 2건은 리팩터링과 증거·검증 코드 보완으로 구�
 
 병합 직후 전체 pytest는 수집 단계에서 실패했다. 기존 단위 테스트는 `prepare_photo`, `clean_analysis_dataframe`을 단일 모듈로 import하지만 파이프라인은 같은 이름을 패키지로 import해 충돌했다. 두 디렉터리에 공개 함수를 내보내는 `__init__.py`를 추가했다. 함수 본문과 호출 계약은 변경하지 않았다. 수정 커밋은 `df1f249`다.
 
-- `.venv/bin/python -m pytest -q`: **103 passed, 9 warnings**. [전체 로그](evidence/task5/pytest_integrated.txt).
+- `.venv/bin/python -m pytest -q`: **103 passed, 9 warnings**. [전체 로그](ai_log/task5_evidence/pytest_integrated.txt).
 - `.venv/bin/python main.py --help`: exit 0.
 - `.venv/bin/python scripts/verify_task5.py`: 합성 입력 200건 동작 비교 통과.
 - 경고는 기존 Pillow getdata 폐기 예고이며 통합 테스트에서도 발생해 총 9개다.
@@ -73,7 +73,7 @@ Task 5 구현과 팀 main 통합 검증은 완료했다. 사람의 직접 판단
 
 ## analyze_with_gemini AI 보조 자체 코드 리뷰
 
-[AI 보조 자체 코드 리뷰](docs/reviews/analyze_with_gemini_review.md)를 작성했다. 모듈 테스트 43개, 전체 103개가 통과했다. 별도 재현에서 비Mock 요청에도 고정 Mock이 반환되는 점과 통신 실패 시 다음 사진 처리가 중단되는 점을 확인했다. Task 1·3와 정책·구현 범위를 맞추기 위해 제품 코드 수정은 보류했다. 이 리뷰는 팀 간 교차 리뷰로 계산하지 않는다.
+[AI 보조 자체 코드 리뷰](ai_log/task5_evidence/reviews/analyze_with_gemini_review.md)를 작성했다. 모듈 테스트 43개, 전체 103개가 통과했다. 별도 재현에서 비Mock 요청에도 고정 Mock이 반환되는 점과 통신 실패 시 다음 사진 처리가 중단되는 점을 확인했다. Task 1·3와 정책·구현 범위를 맞추기 위해 제품 코드 수정은 보류했다. 이 리뷰는 팀 간 교차 리뷰로 계산하지 않는다.
 
 ## 진행상황 · 2026-11-11 문서 점검
 
