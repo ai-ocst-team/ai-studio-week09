@@ -14,6 +14,15 @@ BROKEN_CSV = SAMPLE_DIR / "sample_photos_broken.csv"
 EXPECTED_COLUMNS = ["id", "final_score", "captured_at", "tags"]
 
 
+def load_csv_with_fallback(stream: BytesIO) -> pd.DataFrame:
+    """app.py와 동일한 UTF-8 우선 읽기 후 seek(0) + CP949 재시도 패턴"""
+    try:
+        return pd.read_csv(stream, encoding="utf-8", keep_default_na=False)
+    except UnicodeDecodeError:
+        stream.seek(0)
+        return pd.read_csv(stream, encoding="cp949", keep_default_na=False)
+
+
 def test_scenario_csv_files_exist():
     assert SAMPLE_CSV.is_file()
     assert CP949_CSV.is_file()
@@ -58,6 +67,18 @@ def test_broken_csv_omits_final_score():
     assert "final_score" not in broken.columns
 
 
+def test_app_fallback_pattern_and_missing_column_detection():
+    cp949_stream = BytesIO(CP949_CSV.read_bytes())
+    recovered_df = load_csv_with_fallback(cp949_stream)
+    assert recovered_df.columns.tolist() == EXPECTED_COLUMNS
+    assert len(recovered_df) == 14
+
+    broken_stream = BytesIO(BROKEN_CSV.read_bytes())
+    broken_df = load_csv_with_fallback(broken_stream)
+    missing_cols = set(EXPECTED_COLUMNS) - set(broken_df.columns)
+    assert missing_cols == {"final_score"}
+
+
 def test_korean_tags_include_repeated_values():
     photos = pd.read_csv(SAMPLE_CSV, encoding="utf-8")
     tag_counts = Counter(
@@ -66,4 +87,4 @@ def test_korean_tags_include_repeated_values():
         for tag in json.loads(value)
     )
 
-    assert sum(count >= 2 for count in tag_counts.values()) >= 2
+    assert sum(count >= 2 for count in tag_counts.values()) >= 4
