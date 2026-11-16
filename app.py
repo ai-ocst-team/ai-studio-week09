@@ -22,6 +22,7 @@ from backend import (
 
 def _read_csv_with_cp949_fallback(uploaded_file) -> pd.DataFrame:
     """UTF-8로 CSV를 읽고 실패 시 파일 포인터를 되돌려 CP949로 재시도한다."""
+    uploaded_file.seek(0)
     try:
         return pd.read_csv(uploaded_file)
     except UnicodeDecodeError:
@@ -33,6 +34,8 @@ def _reset_session_data() -> None:
     """오류 발생 또는 업로드 해제 시 보관된 분석 상태를 초기화한다."""
     st.session_state.prepared_df = None
     st.session_state.uploaded_file_sig = None
+    st.session_state.pop("min_score_filter", None)
+    st.session_state.pop("tag_filter", None)
 
 
 def main() -> None:
@@ -77,9 +80,16 @@ def main() -> None:
             st.stop()
 
         st.session_state.uploaded_file_sig = file_sig
+        st.session_state.pop("min_score_filter", None)
+        st.session_state.pop("tag_filter", None)
 
     # [session_state 2단계: 읽기] Rerun 시 보관된 정제 DataFrame 재사용
     df_clean = st.session_state.prepared_df
+    if df_clean is None:
+        st.stop()
+
+    if df_clean.empty:
+        st.warning("유효한 점수 데이터가 포함된 행이 없습니다.")
 
     # 3. 사이드바 필터 (조작 시 즉시 Rerun 반영)
     st.sidebar.header("분석 필터")
@@ -107,7 +117,10 @@ def main() -> None:
     # 4. 출력: KPI -> 차트 -> 상세 표
     col1, col2, col3 = st.columns(3)
     col1.metric("필터링된 사진 수", f"{summary['total_photos']:,}장")
-    col2.metric("평균 종합 점수", f"{summary['avg_score']:.2f}점")
+    col2.metric(
+        "평균 종합 점수",
+        "-" if summary["total_photos"] == 0 else f"{summary['avg_score']:.2f}점",
+    )
     col3.metric("촬영일 유효 건수", f"{summary['valid_date_count']:,}건")
 
     chart_col1, chart_col2 = st.columns(2)
@@ -120,7 +133,7 @@ def main() -> None:
             st.line_chart(monthly_df, x="year_month", y="avg_score")
 
     with chart_col2:
-        st.subheader("주요 감성 태그 평균 점수 (2회 이상)")
+        st.subheader("상위 감성 태그 평균 점수 (최대 5개, 2회 이상)")
         tags_df = summary["tags_df"]
         if tags_df.empty:
             st.info("2회 이상 등장한 태그가 없습니다.")
@@ -128,7 +141,7 @@ def main() -> None:
             st.bar_chart(tags_df, x="tag", y="avg_score")
 
     st.subheader("상세 분석 목록")
-    st.dataframe(df_filtered, use_container_width=True)
+    st.dataframe(df_filtered)
 
 
 if __name__ == "__main__":
