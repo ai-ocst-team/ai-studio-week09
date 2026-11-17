@@ -4,7 +4,7 @@
 
 ---
 
-## 0. 전체 파이프라인 흐름
+## 전체 파이프라인 흐름
 
 ```text
 이미지 파일 경로 (image_dir)
@@ -28,6 +28,17 @@
         └─ dict {total_photos, monthly_trend, top_tags, bottom_tags,
                  user_intent_hint, processed_count, failed_count}
 ```
+
+
+### 모듈별 입출력 요약표
+
+| 단계 | 모듈명 (함수명) | 입력 | 출력 | 핵심 검증 및 제약 사항 |
+|---|---|---|---|---|
+| 1 | `prepare_photo` | `image_path: str \| Path` | `dict[str, Any]` (PhotoPreparation) | JPEG(Q90) 재인코딩, 긴 변 3072px 초과 시 리사이즈, 안전 EXIF 7종 화이트리스트 추출, 원본 바이트 기준 SHA-256·dHash 생성 |
+| 2 | `analyze_with_gemini` | `photo: dict`, `model: str`, `hint: str` | `dict[str, Any]` (PhotoAnalysis) | sha256 64자리 16진수 검증, `_SAFE_EXIF_KEYS` 해당 값 타입 검증(필수 아님), 프롬프트 주입 격리, USE_MOCK 기반 Mock/Real 분기 |
+| 3 | `validate_vlm_response` | `raw_text: str` | `dict[str, Any]` (PhotoAnalysis) | 코드펜스 제거, 필수 7개 필드, 점수 0~10, 6개 범주 태그 어휘(범주당 최대 2개), focus_status 5종 검증 |
+| 4 | `clean_analysis_dataframe` | `df_raw: pd.DataFrame` | `pd.DataFrame` | 필수 열 4종, score 클리핑(0.0~10.0) 및 결측 행 제거, captured_at → `datetime64[ns]`(파싱 실패는 NaT, 행 유지), 순서/인덱스 보존 |
+| 5 | `aggregate_photo_insights` | `df_analyses: pd.DataFrame` | `dict[str, Any]` (PhotoInsights) | 빈 입력 시 empty_contract 반환, 월별(YYYY-MM) count/avg_score, count>=2 태그만 top/bottom 5 |
 
 ---
 
@@ -81,7 +92,7 @@
 | `photo` | `dict[str, Any]` | 필수 키: `"upload_bytes"`, `"sha256"`, `"safe_exif"` |
 | `photo["upload_bytes"]` | `bytes` | 비어 있지 않은 `bytes` |
 | `photo["sha256"]` | `str` | `^[0-9a-fA-F]{64}$` 형식 문자열 |
-| `photo["safe_exif"]` | `dict` | 키가 `_SAFE_EXIF_KEYS`에 해당하는 경우 값 타입은 `int \| float \| str` (`bool` 불가, `float`는 `math.isfinite` 필수) |
+| `photo["safe_exif"]` | `dict` | 키가 `_SAFE_EXIF_KEYS`에 해당하는 경우(필수는 아니며 존재 시) 값 타입은 `int \| float \| str` (`bool` 불가, `float`는 `math.isfinite` 필수) |
 | `model` | `str` | `strip()` 후 비어 있지 않은 문자열 (기본 CLI/파이프라인 값: `"gemini-1.5-flash"`) |
 | `hint` | `str` | 사용자 촬영 의도 문자열 (빈 문자열 `""` 허용, 시스템/task 덮어쓰기 방지 대상으로 취급) |
 
@@ -114,6 +125,7 @@
   }
 }
 ```
+
 - `task`는 `prompts/photo_analysis_prompt.txt`를 UTF-8로 읽고 앞뒤 공백을 제거한 내용입니다. 실행 위치와 무관하게 모듈 경로 기준으로 파일을 찾습니다. `safe_exif`, `hint`, `response_contract`는 코드에서 별도 JSON 필드로 구성합니다.
 
 ### `llm_client` Mock / Real 전환 규칙 (`USE_MOCK`)
@@ -137,7 +149,7 @@
 - **함수 시그니처**: `validate_vlm_response(raw_text: str) -> PhotoAnalysis` (`dict[str, Any]`)
 
 ### 입력 제약
-- `raw_text`: JSON 객체 문자열 또는 Markdown 코드 펜스(````json ... ````)로 감싼 JSON 객체 문자열
+- `raw_text`: JSON 객체 문자열 또는 Markdown 코드 펜스(```` ```json ... ``` ````)로 감싼 JSON 객체 문자열
 
 ### 출력 스키마 (`PhotoAnalysis`) 및 허용 어휘
 | 필드 | 타입 / 범위 | 제약 조건 |
@@ -160,6 +172,41 @@
 
 #### `focus_status` 허용 값 (`_FOCUS_STATUSES`)
 - `"완벽 칼초점"`, `"미세 앞핀"`, `"미세 뒤핀"`, `"초점 이탈"`, `"판별 불가"`
+
+### 참고: `PhotoAnalysis` 타입 힌트 (TypedDict / Literal)
+
+> 위 표의 점수 범위·태그 어휘·focus_status 허용값을 코드 수준 타입 힌트로 명시한 것으로, 표의 내용과 동일합니다 (실제 구현은 `dict[str, Any]`를 반환하며, 아래는 그 구조를 설명하기 위한 타입 주석입니다).
+
+```python
+from typing import TypedDict, Literal
+
+TagSubjectGenre = Literal["자연풍경", "건축도시", "인물동물", "사물정물", "거리스냅"]
+TagLighting = Literal["안정된 순광", "골든아워", "흐린날 확산광", "극단적 역광", "저조도 야경"]
+TagMotion = Literal["완전 정지", "완만한 흐름", "예측불가 빠른동세", "찰나의 순간"]
+TagAngle = Literal["아이레벨", "로우 앵글", "하이앵글(탑뷰)", "피사체 눈높이 일치", "틸트사선"]
+TagComposition = Literal["단일피사체 집중", "다층 레이어", "프레임인프레임", "대칭패턴", "여백의미"]
+TagColorHarmony = Literal["자연스런 뉴트럴", "뚜렷한 보색대비", "차분한 모노톤", "다채로운 색정돈", "절제된 톤다운"]
+
+class AestheticTags(TypedDict):
+    """6대 범주별 태그 (각 범주당 최대 2개 허용, 빈 리스트 허용)."""
+    피사체_장르: list[TagSubjectGenre]
+    빛의_조건: list[TagLighting]
+    피사체_동세: list[TagMotion]
+    카메라_앵글: list[TagAngle]
+    공간_구성: list[TagComposition]
+    색채_조화: list[TagColorHarmony]
+
+FocusStatus = Literal["완벽 칼초점", "미세 앞핀", "미세 뒤핀", "초점 이탈", "판별 불가"]
+
+class PhotoAnalysis(TypedDict):
+    final_score: float
+    composition_score: float
+    lighting_score: float
+    color_score: float
+    technique_score: float
+    aesthetic_tags: AestheticTags
+    focus_status: FocusStatus
+```
 
 ### 예외 정책
 - JSON 파싱 실패, 필수 필드 누락, 점수 범위/타입 위반, 허용되지 않은 태그/범주, 범주별 최대 2개 초과, 허용되지 않은 `focus_status` 시 `ValueError`를 발생시킵니다.
@@ -192,6 +239,15 @@
 - **`final_score` 정제**: `bool`·복소수·비유한값(`NaN`/`inf`)·비수치 문자열은 `None` 판정 후 해당 행을 제거하고, 유효 값은 `0.0 ~ 10.0` 범위로 클리핑(`float64`)합니다.
 - **`captured_at` 정제**: `date`/`datetime`/`pd.Timestamp` 및 `YYYY-MM-DD`, `YYYY-MM-DD[Tt ]HH:MM...` 형식만 허용합니다. 타임존 정보는 현지 시각 기준(`tz_localize(None)`)으로 제거해 `datetime64[ns]`로 정규화하며, 파싱 불가 값은 `NaT`로 남기고 **행은 유지**합니다.
 - **보존 정책**: 원본 행 순서, 인덱스, 열 순서, `tags` 및 추가 열을 그대로 보존합니다.
+
+### 컬럼 계약 요약표
+
+| 컬럼명 | 원본 입력 허용 타입 | 정제 후 출력 타입 | Null/NaN 허용 | 설명 |
+|---|---|---|---|---|
+| `id` | `object` (`str`, `int`) | `object` | ❌ 불가 | 사진 레코드 고유 ID |
+| `final_score` | `float`, `int`, `str`, `Decimal` 등 | `float64` | ❌ 변환 불가 행 제거 | 0.0 ~ 10.0 클리핑된 실수 |
+| `captured_at` | `str`, `datetime`, `date`, `Timestamp` | `datetime64[ns]` | ⭕ 허용 (`NaT`, 행 유지) | 타임존 제거된 로컬 타임스탬프 |
+| `tags` | `list[str]` | `object` (`list[str]`) | ⭕ 허용 | 추출된 태그 리스트 |
 
 ### 예외 정책
 - `TypeError`: 입력이 `pd.DataFrame`이 아닌 경우
@@ -246,3 +302,13 @@ Stage 5 `aggregate_photo_insights`의 4개 키에 오케스트레이션 메타 �
 | `user_intent_hint` | `str` | 실행 시 전달된 `hint` 문자열 |
 | `processed_count` | `int` | Stage 1~3을 정상 통과한 이미지 수 |
 | `failed_count` | `int` | Stage 1~3 처리 중 예외가 발생한 이미지 수 |
+
+---
+
+## 8. 데이터 보안 및 파이프라인 거버넌스 요약
+
+> 위 1~7절에 흩어져 있는 보안·격리·방어적 설계 규칙을 한곳에 모은 요약입니다. 새로운 규칙을 추가하는 것이 아니라 해당 절의 내용을 다시 가리킵니다.
+
+1. **개인정보/프라이버시 보호**: `prepare_photo`는 GPS 좌표·기기 일련번호 등 식별 메타데이터를 추출하지 않고 7개 화이트리스트 EXIF 키만 추출합니다 (1절).
+2. **프롬프트 인젝션 격리**: `analyze_with_gemini`는 사용자 `hint`를 JSON 페이로드의 순수 데이터 필드로만 주입하며, `task`(시스템 지시)를 덮어쓰지 못하도록 분리합니다 (2절).
+3. **스키마 계약 엄격성**: `clean_analysis_dataframe`은 필수 열 누락 시 `ValueError`로 명시적으로 실패하고, `aggregate_photo_insights`는 빈/`None` 입력에 대해 크래시 대신 `empty_contract`(모두 0/빈 값)를 반환하는 방어적 설계를 취합니다 (5·6절).
