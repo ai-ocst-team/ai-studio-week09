@@ -1,0 +1,50 @@
+Audit time: 2026-11-17T22:20:51.727468+09:00
+Python: 3.12.14
+pandas 3.0.1
+pillow 13.0.0
+pytest 9.1.1
+git ["rev-parse", "HEAD"] exit= 0
+d09e75b732167b43024b23a64a1e439e554a9892
+git ["rev-parse", "--is-shallow-repository"] exit= 0
+false
+git ["ls-files", "--", ".env*", "**/.env*"] exit= 0
+(no output)
+git ["log", "--all", "--full-history", "--format=%h %s", "--", "**.env*", ".env*", "**/.env*"] exit= 0
+(no output)
+git ["check-ignore", "--", ".env", "nested/.env", ".env.production", "nested/.env.local", ".venv/probe", "__pycache__/probe", "test.local"] exit= 0
+.env
+nested/.env
+.env.production
+nested/.env.local
+.venv/probe
+__pycache__/probe
+test.local
+UI transformation calls: []
+backend imports: ['from __future__ import annotations', 'import json', 'from typing import Any', 'import pandas as pd', 'from aggregate_photo_insights.photo_analytics import aggregate_photo_insights', 'from clean_analysis_dataframe.clean_analysis_dataframe import clean_analysis_dataframe']
+Session initialization guards: present; file replacement/error reset: reviewed in source
+sample_photos.csv {"total_photos": 14, "avg_score": 7.66, "valid_date_count": 12} month_rows= 4 tag_rows= 5
+architecture tag filter: 3 7.83
+CP949 sample fails UTF-8 as expected
+sample_photos_cp949.csv {"total_photos": 14, "avg_score": 7.66, "valid_date_count": 12} month_rows= 4 tag_rows= 5
+architecture tag filter: 3 7.83
+Broken CSV missing: ['final_score']
+Broken CSV rejected: 필수 컬럼 누락: final_score
+Scoped credential/transport heuristic locations (values suppressed): []
+Scope limit: no full-history secret-content scan, image OCR, external account audit or browser interaction.
+Test command: ["C:\\Users\\psang\\Documents\\Codex\\2026-09-22\\dlr\\work\\week9\\test-env\\Scripts\\python.exe", "-B", "-X", "utf8", "-m", "pytest", "-q", "-o", "addopts=", "-p", "no:cacheprovider", "--basetemp=C:\\Users\\psang\\Documents\\Codex\\2026-09-22\\dlr\\work\\week9\\week11-audit-prnujnug\\pytest"]
+........................................................................ [ 37%]
+........................................................................ [ 75%]
+................................................                         [100%]
+============================== warnings summary ===============================
+prepare_photo/test_prepare_photo.py: 4 warnings
+tests/test_integration.py: 5 warnings
+tests/test_llm_client.py: 3 warnings
+  C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\ai-studio-week09-review\prepare_photo\prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+192 passed, 12 warnings in 2.34s
+ 
+pytest_exit_code= 0
+
+audit_exit_code=0

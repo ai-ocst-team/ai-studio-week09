@@ -11,6 +11,7 @@ ENV/
 
 # Environment Variables & Security
 .env
+.env.*
 *.local
 
 # Testing & Coverage
