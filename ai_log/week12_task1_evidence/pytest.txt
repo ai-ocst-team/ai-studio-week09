@@ -1,0 +1,22 @@
+Task 1 | 2026-11-22 KST | base: bd1d17de7c6495226d4faf2fc446fbf6d5923e27
+Baseline before changes: 192 passed, 12 warnings in 3.93s
+Python 3.12.14
+python -B -X utf8 -m pytest -q -o addopts= -p no:cacheprovider --basetemp=C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\week12-pytest-8c96f098a710468da420a9d5c12b1523 tests/test_backend.py
+........................................................................ [ 97%]
+..                                                                       [100%]
+74 passed in 1.16s
+exit_code=0
+python -B -X utf8 -m pytest -q -o addopts= -p no:cacheprovider --basetemp=C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\week12-pytest-0fb107dc63e34bde93051d08e91d0a6b
+........................................................................ [ 34%]
+........................................................................ [ 69%]
+..............................................................           [100%]
+============================== warnings summary ===============================
+prepare_photo/test_prepare_photo.py: 4 warnings
+tests/test_integration.py: 5 warnings
+tests/test_llm_client.py: 3 warnings
+  C:\Users\psang\Documents\Codex\2026-09-22\dlr\work\week9\ai-studio-week09-review\prepare_photo\prepare_photo.py:69: DeprecationWarning: Image.Image.getdata is deprecated and will be removed in Pillow 14 (2027-10-15). Use get_flattened_data instead.
+    pixels = list(small.getdata())
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+206 passed, 12 warnings in 3.51s
+exit_code=0
