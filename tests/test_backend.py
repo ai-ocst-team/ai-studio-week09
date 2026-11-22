@@ -1,4 +1,5 @@
 import math
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -384,3 +385,77 @@ def test_summarize_after_filter_reflects_subset(df_clean):
     )
     assert summary["total_photos"] == 2
     assert summary["avg_score"] == 8.5
+
+
+def test_week12_dropped_rows_match_actual_cleaning(df_clean):
+    raw = make_raw_df()
+    assert backend.count_dropped_rows(raw, df_clean) == 1
+    assert backend.count_dropped_rows(df_clean, raw) == 0
+
+
+def test_week12_grade_boundaries_and_copy():
+    source = pd.DataFrame({"final_score": [5.99, 6.0, 7.99, 8.0]}, index=[2, 2, 8, 9])
+    graded = backend.assign_cut_grades(source)
+    assert graded["cut_grade"].tolist() == ["보류", "B컷", "B컷", "A컷"]
+    assert graded.index.equals(source.index)
+    assert "cut_grade" not in source
+    assert backend.summarize_cut_counts(graded) == {"A컷": 1, "B컷": 2, "보류": 1}
+    assert backend.assign_cut_grades(source, 9, 7)["cut_grade"].tolist() == [
+        "보류", "보류", "B컷", "B컷",
+    ]
+
+
+@pytest.mark.parametrize("a,b", [(6, 6), (6, 8), (math.nan, 6), (math.inf, 6), (8, -1), (11, 6)])
+def test_week12_invalid_cutoffs_raise(a, b):
+    with pytest.raises(ValueError, match="기준 점수"):
+        backend.assign_cut_grades(pd.DataFrame(), a, b)
+
+
+def test_week12_empty_and_absent_grades_have_zero_counts(df_clean):
+    empty = backend.assign_cut_grades(df_clean.iloc[:0])
+    assert empty.empty
+    assert "cut_grade" in empty
+    assert backend.summarize_cut_counts(empty) == {"A컷": 0, "B컷": 0, "보류": 0}
+    only_a = backend.assign_cut_grades(pd.DataFrame({"final_score": [10.0]}))
+    assert backend.summarize_cut_counts(only_a) == {"A컷": 1, "B컷": 0, "보류": 0}
+
+
+def test_week12_glossary_covers_vlm_and_sample_csv_tags():
+    from analyze_with_gemini.analyze_with_gemini import _TAG_VOCABULARY
+
+    sample = Path(__file__).resolve().parents[1] / "sample_data" / "sample_photos.csv"
+    sample_data = prepare_uploaded_dataframe(pd.read_csv(sample))
+    expected = {tag for group in _TAG_VOCABULARY.values() for tag in group}
+    expected.update(tag for row in sample_data["tags"] for tag in row)
+    assert expected <= backend.TAG_GLOSSARY.keys()
+    assert all(backend.TAG_GLOSSARY[tag].strip() for tag in expected)
+
+
+@pytest.mark.parametrize("messages", [[], [{"role": "user", "content": " \t"}]])
+def test_week12_empty_chat_prompts_for_question(messages):
+    assert "질문을 입력" in backend.get_ai_reply(messages)
+
+
+def test_week12_mock_answer_uses_latest_question_without_context():
+    messages = [
+        {"role": "user", "content": "A컷을 고르는 방법"},
+        {"role": "assistant", "content": "이전 응답"},
+        {"role": "user", "content": "태그별로 어떻게 골라?"},
+    ]
+    assert backend.get_ai_reply(messages).startswith("[MOCK]")
+    assert "상위 태그의 공통점" in backend.get_ai_reply(messages)
+
+
+def test_week12_mock_answer_uses_dashboard_summary():
+    messages = [{"role": "user", "content": "B컷은 어떻게 골라?"}]
+    context = {
+        "total_photos": 14,
+        "avg_score": 7.66,
+        "a_cut_count": 6,
+        "b_cut_count": 0,
+        "top_tags": [{"tag": "골든아워", "avg_score": 8.8, "count": 4}],
+    }
+    reply = backend.get_ai_reply(messages, context)
+    for detail in ("사진 14장", "평균 7.66점", "A컷 6장", "B컷 0장", "골든아워", "초점과 구도"):
+        assert detail in reply
+    assert "필터 범위를 넓혀" in backend.get_ai_reply(messages, {"total_photos": 0})
