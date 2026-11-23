@@ -132,6 +132,7 @@ def main() -> None:
         st.session_state.pop("tag_filter", None)
         st.session_state.pop("a_cutoff_filter", None)
         st.session_state.pop("b_cutoff_filter", None)
+        _reset_chat_messages()
 
     # [session_state 2단계: 읽기] Rerun 시 보관된 정제 DataFrame 재사용
     df_clean = st.session_state.prepared_df
@@ -220,7 +221,7 @@ def main() -> None:
             f"보류: {b_cutoff:.1f}점 미만"
         )
 
-        col1, col2, col3, col4, col5 = st.columns(5)
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
         col1.metric("필터링된 사진 수", f"{summary['total_photos']:,}장")
         col2.metric(
             "평균 종합 점수",
@@ -228,7 +229,8 @@ def main() -> None:
         )
         col3.metric("A컷 수", f"{cut_counts['A컷']:,}장")
         col4.metric("B컷 수", f"{cut_counts['B컷']:,}장")
-        col5.metric("촬영일 유효 건수", f"{summary['valid_date_count']:,}건")
+        col5.metric("보류 수", f"{cut_counts['보류']:,}장")
+        col6.metric("촬영일 유효 건수", f"{summary['valid_date_count']:,}건")
 
         chart_col1, chart_col2 = st.columns(2)
         with chart_col1:
