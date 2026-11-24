@@ -13,6 +13,8 @@ ENV/
 .env
 .env.*
 *.local
+.streamlit/secrets.toml
+secrets.toml
 
 # Testing & Coverage
 .pytest_cache/

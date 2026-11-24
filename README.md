@@ -1,8 +1,17 @@
 # 사진 평가 AI (아트서강)
 
+공식 배포 URL: https://photo-grader.streamlit.app/
+
 사진 폴더를 읽어 VLM으로 구도·빛·색·기술 점수와 감성 태그를 매기고, 그 결과를 pandas로 정제·집계해 월별 추이와 상·하위 태그를 뽑는 파이프라인이다. 현재 VLM 호출은 Mock 응답만 지원한다.
 
 11주차에는 사진 분석 결과 CSV를 올려 점수·촬영 월·태그별 통계를 확인하는 Streamlit 대시보드를 추가했다. CSV 대시보드는 사진을 새로 평가하거나 LLM을 호출하지 않는다. 모듈별 입출력 계약은 [docs/schema.md](docs/schema.md)를 참고한다.
+
+## 12주차 공식 배포 및 실행 안내
+
+- 공식 배포 URL: https://photo-grader.streamlit.app/
+- 로컬 실행은 아래 11주차 안내의 가상환경 설정과 `streamlit run app.py`를 따른다.
+- 로컬 환경 변수는 Git에서 제외한 `.env` 등으로 관리하고, 배포 환경에서 필요한 비밀값은 Streamlit Community Cloud의 Secrets에 등록해 `st.secrets`로 읽는다. 실제 키는 코드나 저장소에 넣지 않는다. 현재 Mock 기능에는 실제 API 키가 필요하지 않다.
+- 12주차 AI Culling Q&A는 `get_ai_reply`의 Mock 응답을 사용한다. CSV 읽기 오류와 잘못된 데이터는 안내하고, 파일 교체 시 대화를 초기화하는 등 방어적으로 처리한다.
 
 ## 11주차 Streamlit 대시보드 실행 및 설계 안내
 
