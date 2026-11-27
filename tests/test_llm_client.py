@@ -6,15 +6,41 @@ import logging
 import pytest
 from PIL import Image
 
+import llm_service
 from analyze_with_gemini import llm_client
 from analyze_with_gemini.analyze_with_gemini import analyze_with_gemini
 from pipeline import run_pipeline
 
 
+def _sample_valid_json() -> str:
+    return json.dumps(
+        {
+            "final_score": 9.1,
+            "composition_score": 9.0,
+            "lighting_score": 9.2,
+            "color_score": 9.0,
+            "technique_score": 9.1,
+            "aesthetic_tags": {
+                "피사체 장르": ["자연풍경"],
+                "빛의 조건": ["골든아워"],
+                "피사체 동세": [],
+                "카메라 앵글": ["아이레벨"],
+                "공간 구성": ["여백의미"],
+                "색채 조화": [],
+            },
+            "focus_status": "완벽 칼초점",
+        },
+        ensure_ascii=False,
+    )
+
+
 @pytest.fixture(autouse=True)
-def isolated_mode(monkeypatch):
-    """각 테스트 전 모드를 초기화하고 파이프라인이 바꾼 환경도 복원한다."""
+def isolated_mode(monkeypatch, tmp_path):
+    """각 테스트 전 모드를 초기화하고 로컬 .env 및 파이프라인 환경 변경을 격리한다."""
+    monkeypatch.setattr(llm_service, "_ENV_PATH", tmp_path / "nonexistent.env")
     monkeypatch.setenv("USE_MOCK", "true")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("LLM_MODEL", raising=False)
 
 
 def test_default_mock_returns_valid_contract_and_safe_log(monkeypatch, caplog):
@@ -39,13 +65,30 @@ def test_true_settings_return_mock(monkeypatch, flag):
 
 
 @pytest.mark.parametrize("flag", ["false", "0", "no", "off", " FALSE "])
-def test_false_settings_do_not_silently_return_mock(monkeypatch, flag, caplog):
-    """실제 모드가 미구현이면 성공한 것처럼 Mock을 반환하지 않는다."""
+def test_false_settings_route_to_real_claude_adapter(monkeypatch, flag, caplog):
+    """비Mock 설정 시 Mock 대신 llm_service.analyze_photo_with_claude 경계로 전달된다."""
     monkeypatch.setenv("USE_MOCK", flag)
+    captured = []
+
+    def fake_analyze(image_bytes, prompt, model=None):
+        captured.append((image_bytes, prompt, model))
+        return _sample_valid_json(), {"input_tokens": 120, "output_tokens": 45, "model": "claude-haiku-4-5"}
+
+    monkeypatch.setattr(llm_service, "analyze_photo_with_claude", fake_analyze)
+
     with caplog.at_level(logging.INFO, logger=llm_client.__name__):
-        with pytest.raises(NotImplementedError):
-            llm_client.generate_analysis(b"dummy", "dummy", "dummy")
+        raw = llm_client.generate_analysis(b"img-bytes", "claude-haiku-4-5", '{"task": "x"}')
+
     assert "[MOCK]" not in caplog.text
+    assert captured == [(b"img-bytes", '{"task": "x"}', "claude-haiku-4-5")]
+    assert json.loads(raw)["final_score"] == 9.1
+
+
+def test_false_without_api_key_raises_runtime_error(monkeypatch):
+    """비Mock 설정에서 ANTHROPIC_API_KEY가 없으면 RuntimeError가 발생한다."""
+    monkeypatch.setenv("USE_MOCK", "false")
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        llm_client.generate_analysis(b"dummy", "claude-haiku-4-5", "dummy")
 
 
 @pytest.mark.parametrize("flag", ["", "flase", "2"])
@@ -58,12 +101,17 @@ def test_invalid_mode_is_rejected(monkeypatch, flag):
 
 def test_mode_is_read_at_call_time(monkeypatch):
     """import 후 설정이 바뀌어도 각 호출에 새 설정이 반영된다."""
-    assert isinstance(llm_client.generate_analysis(b"dummy", "dummy", "dummy"), str)
+    monkeypatch.setattr(
+        llm_service,
+        "analyze_photo_with_claude",
+        lambda image_bytes, prompt, model=None: (_sample_valid_json(), {"input_tokens": 10, "output_tokens": 5, "model": "claude-haiku-4-5"}),
+    )
+
+    assert json.loads(llm_client.generate_analysis(b"dummy", "dummy", "dummy"))["final_score"] == 8.0
     monkeypatch.setenv("USE_MOCK", "false")
-    with pytest.raises(NotImplementedError):
-        llm_client.generate_analysis(b"dummy", "dummy", "dummy")
+    assert json.loads(llm_client.generate_analysis(b"dummy", "dummy", "dummy"))["final_score"] == 9.1
     monkeypatch.setenv("USE_MOCK", "true")
-    assert isinstance(llm_client.generate_analysis(b"dummy", "dummy", "dummy"), str)
+    assert json.loads(llm_client.generate_analysis(b"dummy", "dummy", "dummy"))["final_score"] == 8.0
 
 
 @pytest.mark.parametrize("values,error", [
@@ -79,8 +127,8 @@ def test_invalid_input_is_rejected_before_real_call(monkeypatch, values, error):
         llm_client.generate_analysis(*values)
 
 
-def test_pipeline_switch_reaches_client(tmp_path, caplog):
-    """합성 이미지로 Mock 성공과 실제 모드 미구현 전파를 모두 확인한다."""
+def test_pipeline_switch_reaches_client(tmp_path, monkeypatch, caplog):
+    """합성 이미지로 Mock 성공과 비Mock 실제 API 경계 호출 및 키 누락 전파를 확인한다."""
     Image.new("RGB", (16, 16), "blue").save(tmp_path / "photo.png")
     with caplog.at_level(logging.INFO):
         result = run_pipeline(tmp_path, model="dummy", use_mock=True)
@@ -88,8 +136,22 @@ def test_pipeline_switch_reaches_client(tmp_path, caplog):
     assert result["processed_count"] == 1
     assert result["failed_count"] == 0
     assert "[MOCK]" in caplog.text
-    with pytest.raises(NotImplementedError):
-        run_pipeline(tmp_path, model="dummy", use_mock=False)
+
+    monkeypatch.setattr(
+        llm_service,
+        "analyze_photo_with_claude",
+        lambda image_bytes, prompt, model=None: (_sample_valid_json(), {"input_tokens": 50, "output_tokens": 20, "model": "claude-haiku-4-5"}),
+    )
+    real_result = run_pipeline(tmp_path, model="claude-haiku-4-5", use_mock=False)
+    assert real_result["processed_count"] == 1
+    assert real_result["top_tags"] == []
+    assert real_result["total_photos"] == 1
+
+    monkeypatch.setattr(llm_service, "analyze_photo_with_claude", importlib.reload(llm_service).analyze_photo_with_claude)
+    monkeypatch.setattr(llm_service, "_ENV_PATH", tmp_path / "nonexistent.env")
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
+        run_pipeline(tmp_path, model="claude-haiku-4-5", use_mock=False)
+
     assert run_pipeline(tmp_path, model="dummy", use_mock=True)["total_photos"] == 1
 
 
@@ -130,3 +192,14 @@ def test_missing_or_empty_prompt_stops_request(tmp_path, monkeypatch, exists):
     monkeypatch.setattr(llm_client, "generate_analysis", unexpected)
     with pytest.raises(ValueError, match="프롬프트"):
         analyze_with_gemini({"upload_bytes": b"dummy", "sha256": "a" * 64, "safe_exif": {}}, "dummy", "")
+
+
+def test_mock_mode_resets_last_vision_usage(monkeypatch):
+    """Mock Vision 호출 시 이전 실호출 토큰 기록을 mock 기본값으로 초기화한다."""
+    monkeypatch.setattr(
+        llm_service,
+        "_LAST_VISION_USAGE",
+        {"input_tokens": 333, "output_tokens": 99, "model": "claude-haiku-4-5"},
+    )
+    llm_client.generate_analysis(b"dummy", "dummy", "dummy")
+    assert llm_service.get_last_vision_usage() == {"input_tokens": 0, "output_tokens": 0, "model": "mock"}
