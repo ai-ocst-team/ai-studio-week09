@@ -1,14 +1,20 @@
-"""VLM 호출 경계: USE_MOCK 기본값은 true이며 실제 API는 아직 연결하지 않는다."""
+"""VLM 호출 경계: USE_MOCK 기본값은 true이며 비Mock 모드에서 Claude Vision API를 호출한다."""
 import json
 import logging
-import os
+
+import llm_service
 
 logger = logging.getLogger(__name__)
 
 
 def _generate_real(image_bytes: bytes, model: str, prompt: str) -> str:
-    """13주차 API 구현 교체 지점. 현재는 네트워크 요청 없이 명시적으로 실패한다."""
-    raise NotImplementedError("실제 VLM API는 아직 연결되지 않았습니다. USE_MOCK=true를 사용하세요.")
+    """실제 Claude Vision API를 호출해 검증 가능한 JSON 응답 문자열을 반환한다."""
+    raw_json, _ = llm_service.analyze_photo_with_claude(
+        image_bytes=image_bytes,
+        prompt=prompt,
+        model=model,
+    )
+    return raw_json
 
 
 def _validate_request(image_bytes: bytes, model: str, prompt: str) -> None:
@@ -28,19 +34,15 @@ def _validate_request(image_bytes: bytes, model: str, prompt: str) -> None:
 
 
 def _is_mock_enabled() -> bool:
-    """호출 시점의 USE_MOCK을 해석하고 허용하지 않은 설정은 거부한다."""
-    mode = os.getenv("USE_MOCK", "true").strip().lower()
-    if mode in {"false", "0", "no", "off"}:
-        return False
-    if mode not in {"true", "1", "yes", "on"}:
-        raise ValueError("USE_MOCK은 true/1/yes/on 또는 false/0/no/off여야 합니다.")
-    return True
+    """호출 시점의 USE_MOCK 설정을 llm_service를 통해 해석한다."""
+    return llm_service.is_mock_mode()
 
 
 def _generate_mock() -> str:
     """[MOCK] 입력 내용 없는 실행 로그와 독립된 가상 분석 JSON을 생성한다."""
     # 이미지·프롬프트·EXIF·사용자 의도 등 입력 내용은 로그에 출력하지 않는다.
     logger.info("[MOCK] 실제 VLM 호출 없이 가상 분석 응답을 반환합니다.")
+    llm_service.reset_last_vision_usage()
     response = {
         "final_score": 8.0,
         "composition_score": 8.0,
@@ -77,8 +79,8 @@ def generate_analysis(image_bytes: bytes, model: str, prompt: str) -> str:
 
     Raises:
         TypeError: 인자의 타입이 잘못된 경우.
-        ValueError: 인자가 비어 있거나 USE_MOCK 설정이 허용값이 아닌 경우.
-        NotImplementedError: 비Mock 모드에서 아직 미구현인 실제 API 경계에 도달한 경우.
+        ValueError: 인자가 비어 있거나 USE_MOCK 설정 또는 API JSON 응답이 올바르지 않은 경우.
+        RuntimeError: 비Mock 모드에서 ANTHROPIC_API_KEY가 설정되어 있지 않은 경우.
     """
     _validate_request(image_bytes, model, prompt)
     if _is_mock_enabled():
